@@ -1,0 +1,9 @@
+# Required Arduino environment (exact versions; core 3.x is unsupported)
+esp32:esp32@2.0.14
+ESP_8_BIT Color Composite Video Library@1.3.2
+Adafruit GFX Library@1.11.9
+Adafruit BusIO@1.16.1
+# Core-provided: WiFi, WebServer, LittleFS, Wire (from esp32:esp32@2.0.14)
+# Local 1.3.2 fork patches stop DMA/IRQ before freeing PAL buffers.
+# sha256 ESP_8_BIT_composite.cpp: 3f9f05e1c7db9a8272d901361eed20548827d24816458108f7f02305ba3ff539
+# sha256 ESP_8_BIT_composite.h:   5a3259804e6fe64c9b8a18fe524366c709779d117f8593508c9d7890e318235e

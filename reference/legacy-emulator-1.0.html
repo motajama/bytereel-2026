@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15171a">
+<title>BITBOX BASIC 1.0 — emulátor</title>
+<style>
+:root{color-scheme:dark;--bg:#101216;--panel:#1c2025;--edge:#3a4148;--sub:#adb5bc;--ink:#eff1ec;--orange:#ffab60;--red:#fa432e;--green:#a4d5a0;--yellow:#ffe2a7;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 35% 0%,#26272a 0%,var(--bg) 56%);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--orange)}button,select,input,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+.shell{width:min(1420px,calc(100% - 30px));margin:auto;padding:26px 0 50px}.header{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;padding-bottom:20px;border-bottom:1px solid #3a4148}.eyebrow{font:700 11px var(--mono);letter-spacing:.2em;color:var(--orange);margin-bottom:7px}.logo{font:900 clamp(32px,5vw,58px)/1 var(--mono);letter-spacing:.07em;color:#f1ece2;text-shadow:3px 4px #07080a}.logo span{color:var(--orange)}.subtitle{color:var(--sub);margin-top:8px;font-size:13px}.header-right{text-align:right;font:12px var(--mono);color:var(--sub)}.status-inline{display:inline-flex;align-items:center;gap:8px;margin-bottom:8px}.status-dot{width:9px;height:9px;background:#777;border-radius:50%}.status-dot.on{background:var(--green);box-shadow:0 0 9px #79bb78}
+.main-grid{display:grid;grid-template-columns:minmax(550px,1.1fr) minmax(390px,.9fr);gap:18px;margin-top:18px}.panel{background:linear-gradient(140deg,#24282d,#16191d 75%);border:1px solid #40484e;border-radius:10px;box-shadow:inset 0 1px #535860,0 18px 30px #0005;overflow:hidden}.panel-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:17px 20px 12px;border-bottom:1px solid #3c4449}.panel-head h2{margin:0;font:700 14px var(--mono);letter-spacing:.12em}.panel-head small{font:11px var(--mono);color:var(--sub)}.panel-inner{padding:18px 19px}.label{font:700 11px var(--mono);letter-spacing:.14em;color:#c2c9cb}.note{font-size:12px;color:var(--sub)}.topspace{margin-top:17px}
+.led-blocks{display:grid;grid-template-columns:1fr 1fr;gap:24px}.led-row{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;margin-top:14px}.led-unit{text-align:center;min-width:0}.led-unit small{display:block;font:10px var(--mono);color:#858d94;margin-top:7px}.led{width:clamp(12px,2.4vw,23px);aspect-ratio:1;border-radius:50%;margin:auto;border:2px solid #402a29;background:radial-gradient(circle at 35% 32%,#521e1e,#210a0a 78%);box-shadow:inset 1px 2px 5px #000a,0 0 0 2px #111;transition:background .045s}.led.on{border-color:#b75443;background:radial-gradient(circle at 32% 28%,#ffe4b7 0%,#ff9370 17%,#f54127 50%,#801810 90%);box-shadow:0 0 10px #ff503d7f,inset 0 0 4px #ffb382,0 0 0 2px #222}
+.hex-readout{margin-top:12px;display:flex;align-items:baseline;gap:8px;font:700 22px var(--mono);color:var(--orange)}.hex-readout span{color:#8d99a0;font-size:12px;font-weight:400}.panel-rule{border:0;border-top:1px solid #3c434a;margin:20px 0}.switches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin:11px 0 9px}.switch-item{border:1px solid #343b41;border-radius:6px;background:#15181b;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px 8px;color:#aaa;min-width:0;transition:background .1s,box-shadow .1s}.switch-item[aria-pressed="true"]{background:#32302a;box-shadow:inset 0 0 0 1px #75614c}.sw-no{font:11px var(--mono)}.lever{position:relative;width:25px;height:38px;border:1px solid #5a6166;border-radius:5px;background:linear-gradient(90deg,#353b41,#898f93 53%,#41474b);box-shadow:inset 0 0 5px #050505}.lever:before{content:"";display:block;position:absolute;width:8px;height:19px;left:8px;top:14px;border-radius:5px;background:linear-gradient(90deg,#a0a6a9,#f2f4ef 50%,#a7adb0);transform:rotate(-15deg);transform-origin:center bottom;box-shadow:1px 1px 4px #000}.switch-item[aria-pressed="true"] .lever:before{top:3px;transform:rotate(15deg);transform-origin:center top}.switch-item b{font:12px var(--mono);color:#c9d2d4}.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.control-btn{background:#20252a;border:1px solid #586067;border-radius:6px;min-height:54px;padding:9px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#e7e8e3;font:700 11px var(--mono);letter-spacing:.03em}.control-btn:hover,.action:hover{filter:brightness(1.12)}.control-btn small{font-size:10px;color:#98a0a3;letter-spacing:0}.control-btn.active{background:#453425;border-color:#d29a58;color:#ffe8c2}.control-btn.run.active{background:#26452d;border-color:#77bf82;color:#d0f3d2}.control-btn.danger{border-color:#8c4b45}.control-btn:focus-visible,.switch-item:focus-visible,.action:focus-visible{outline:2px solid var(--orange);outline-offset:2px}.switch-control-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px}.small-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.chip{font:12px var(--mono);padding:5px 8px;border:1px solid #48525a;border-radius:4px;background:#111417;color:#b7c2c7}.chip strong{color:#fff}.speed{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:17px}.speed input{width:100%;accent-color:var(--orange)}.speed-value{font:700 14px var(--mono);color:var(--orange)}
+.viewer{padding:16px}.viewer-stack{position:relative;border:8px solid #15191c;border-radius:12px;background:#090a0a;box-shadow:0 0 0 1px #3e474c,inset 0 0 35px #000;overflow:hidden;aspect-ratio:4/3}.viewer-stack:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0004 0px,#0004 1px,transparent 2px,transparent 5px);mix-blend-mode:multiply;opacity:.45}.viewer-stack canvas{width:100%;height:100%;display:block;image-rendering:pixelated}.viewer-label{position:absolute;top:9px;left:10px;padding:3px 8px;font:11px var(--mono);color:#e5e1cf;background:#000a;z-index:2;border:1px solid #5557}.audio-view{padding:13px 0 4px}.scope{width:100%;height:100px;display:block;border:1px solid #3d4d41;background:#090f0b;border-radius:5px}.actions{display:flex;gap:8px;flex-wrap:wrap}.action{border:1px solid #646e72;color:#eef1ec;background:#293139;border-radius:5px;padding:9px 13px;font:700 12px var(--mono)}.action.primary{background:#e5a35f;border-color:#fbc08b;color:#171713}.action.good{background:#24432d;border-color:#5d936c}.action.warn{background:#4a2c22;border-color:#9c5c3e}.console{background:#101312;border:1px solid #333f3a;min-height:105px;max-height:167px;overflow:auto;padding:10px 12px;border-radius:5px;font:12px/1.55 var(--mono);color:#9bdb9c}.console .error{color:#ff9385}.console .warn{color:#ffcf81}.console .info{color:#9bdb9c}
+.editor-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(390px,.8fr);gap:18px;margin-top:18px}.editor-toolbar{padding:15px 17px 0;display:flex;flex-wrap:wrap;gap:9px;align-items:center}.editor-toolbar select,.editor-toolbar input{background:#11161b;border:1px solid #52606a;color:#f3f3ee;border-radius:5px;padding:8px;font:12px var(--mono)}.code-wrap{padding:14px 17px 17px}.code-wrap textarea{width:100%;min-height:320px;resize:vertical;background:#0c0f12;border:1px solid #435058;border-radius:6px;color:#dce6d6;padding:14px;tab-size:2;font:13px/1.68 var(--mono);outline-color:var(--orange)}.form-caption{color:#939da3;font-size:12px;margin:0 0 8px}.memory-outer{overflow:auto;max-height:392px;margin:15px;border:1px solid #41474b;border-radius:5px}.memory-table{display:grid;grid-template-columns:42px repeat(16,36px);gap:1px;background:#2b3034;width:max-content;font:11px var(--mono)}.memory-head,.memory-addr{display:flex;align-items:center;justify-content:center;background:#252a2d;color:#a7bdc4;min-height:27px}.memory-cell{display:flex;align-items:center;justify-content:center;background:#12171a;color:#b0c6c4;min-height:27px;border:0;cursor:pointer;font:11px var(--mono)}.memory-cell:hover{background:#404b4c}.memory-cell.nonzero{color:#e7eee5}.memory-cell.selected{background:#584c32!important;color:#ffdf99}.memory-cell.pc{outline:1px solid #e75d46;outline-offset:-2px}.memory-cell.monitored{box-shadow:inset 0 2px #80c28b}.memory-hint{padding:0 16px 16px;color:#9ba5a8;font-size:12px}
+.footer{margin-top:18px;border-top:1px solid #43464b;padding:18px 3px;font-size:12px;color:#929ba3}.kbd{font:11px var(--mono);color:#eee;border:1px solid #6b7577;border-radius:3px;padding:2px 5px}.api-inline{font:12px/1.7 var(--mono);color:#d7c4a9}.error-banner{margin-top:14px;display:none;border:1px solid #c25749;background:#4a201d;padding:11px 15px;border-radius:5px;color:#ffe8e5;font-size:13px}.error-banner.show{display:block}
+@media(max-width:1100px){.main-grid,.editor-layout{grid-template-columns:1fr}.viewer{max-width:800px}.memory-outer{max-height:330px}}@media(max-width:620px){.shell{width:calc(100% - 18px);padding-top:15px}.header{align-items:flex-start}.header-right{display:none}.panel-inner{padding:13px}.panel-head{padding:13px}.led-blocks{gap:12px}.led{width:clamp(10px,3.7vw,18px)}.led-row{gap:2px}.controls{grid-template-columns:repeat(2,1fr)}.switch-control-grid{grid-template-columns:repeat(3,1fr)}.switches{gap:3px}.switch-item{padding:8px 2px}.viewer{padding:12px}.logo{font-size:37px}}
+@media(prefers-reduced-motion:reduce){.led,.switch-item{transition:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="header">
+    <div><div class="eyebrow">DIY AUDIOVISUAL COMPUTER · 2026</div><div class="logo">BIT<span>BOX</span></div><div class="subtitle">BASIC 1.0 / 8-bit virtual machine / front-panel computer</div></div>
+    <div class="header-right"><div class="status-inline"><span class="status-dot" id="runDot"></span><span id="globalRunStatus">STOPPED</span></div><br>2 × 256 BYTE RAM BANKS<br>16-BIT LED MEMORY MONITOR</div>
+  </header>
+  <div id="errorBanner" class="error-banner" role="alert"></div>
+  <section class="main-grid">
+    <div class="panel">
+      <div class="panel-head"><h2>FRONT PANEL / CONTROL BUS</h2><small>VIRTUAL MTS-102</small></div>
+      <div class="panel-inner">
+        <div class="led-blocks">
+          <div><div class="label">ADDRESS BUS · A7–A0</div><div class="led-row" id="ledAddress"></div><div class="hex-readout" id="addressText">00 <span>00000000</span></div></div>
+          <div><div class="label">DATA BUS · D7–D0</div><div class="led-row" id="ledData"></div><div class="hex-readout" id="dataText">00 <span>00000000</span></div></div>
+        </div>
+        <div class="small-meta" aria-live="polite"><span class="chip">PC <strong id="pcOut">00</strong></span><span class="chip">A <strong id="aOut">00</strong></span><span class="chip">C <strong id="cOut">00</strong></span><span class="chip">Z <strong id="zOut">1</strong></span><span class="chip">MON <strong id="monOut">EXAM</strong></span></div>
+        <hr class="panel-rule">
+        <div class="label">DATA ENTRY · 8 PÁČEK</div>
+        <div class="switches" id="switches" aria-label="Osm vstupních přepínačů"></div>
+        <div class="small-meta"><span class="chip">SW <strong id="switchHex">50</strong></span><span class="chip">BIN <strong id="switchBin">01010000</strong></span><span class="chip">EDIT <strong id="editOut">00</strong></span></div>
+        <hr class="panel-rule">
+        <div class="label" style="margin-bottom:9px">FRONT PANEL FUNCTIONS</div>
+        <div class="controls">
+          <button type="button" class="control-btn" id="examBtn">EXAM<small>na adresu SW</small></button>
+          <button type="button" class="control-btn" id="writeBtn">WRITE<small>zapsat SW</small></button>
+          <button type="button" class="control-btn" id="nextBtn">NEXT<small>další / STEP</small></button>
+          <button type="button" class="control-btn run" id="runBtn">RUN<small>START / STOP</small></button>
+        </div>
+        <div class="switch-control-grid">
+          <button type="button" class="control-btn active" id="modeBtn">VIDEO<small>VIDEO / AUDIO</small></button>
+          <button type="button" class="control-btn active" id="monitorBtn">LIVE<small>LIVE / SCAN</small></button>
+          <button type="button" class="control-btn active" id="executionBtn">AUTO<small>AUTO / STEP</small></button>
+        </div>
+        <div class="speed"><label class="label" for="speed">SPEED · RYCHLOST PROGRAMU</label><output class="speed-value" id="speedOut">1.00×</output><input id="speed" type="range" min="0" max="100" value="50" step="1"></div>
+        <div class="note">EXAM přejde na adresu nastavenou osmi páčkami, WRITE na ni zapíše nastavenou hodnotu. V režimu STEP znamená NEXT vykonání jedné instrukce. Uložený program lze upravit i za běhu.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>AUDIO / VIDEO OUTPUT</h2><small id="outputMode">MONO PAL · EMULACE</small></div>
+      <div class="viewer">
+        <div class="viewer-stack"><canvas id="screen" width="256" height="192" aria-label="Emulovaný černobílý video výstup"></canvas><div class="viewer-label" id="screenBadge">VIDEO · STANDBY</div></div>
+        <div class="audio-view"><div class="label" style="margin-bottom:7px">AUDIO OSCILLOSCOPE / 8-BIT MONO</div><canvas class="scope" id="scope" width="640" height="110" aria-label="Osciloskop zvuku"></canvas></div>
+        <div class="actions" style="margin:11px 0 13px"><button class="action good" id="audioBtn">◉ ZAPNOUT ZVUK</button><button class="action" id="silenceBtn">ZTIŠIT</button></div>
+        <div class="note" id="audioHint">Kvůli pravidlům prohlížeče je třeba zvuk povolit kliknutím. Audio běží jen v režimu AUDIO a při RUN.</div>
+        <div class="small-meta"><span class="chip">FREQ <strong id="freqOut">200 Hz</strong></span><span class="chip">PATTERN <strong id="patOut">00</strong></span><span class="chip">FRAME <strong id="frameOut">0</strong></span><span class="chip">INSTR <strong id="instrOut">0</strong></span></div>
+        <div style="margin-top:16px" class="label">SYSTEM LOG</div><div class="console" id="log" role="log" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+  <section class="editor-layout">
+    <div class="panel">
+      <div class="panel-head"><h2>PROGRAM EDITOR / ASSEMBLER</h2><small>HEX + MNEMONIKY + NÁVĚŠTÍ</small></div>
+      <div class="editor-toolbar"><label for="preset" class="label">UKÁZKA</label><select id="preset"><option value="glitch">GLITCH MACHINE · VIDEO</option><option value="generative">GENERATIVE STRIPES · VIDEO</option><option value="xor">XOR WAVES · VIDEO</option><option value="randomSound">GENERATIVE TONES · AUDIO</option><option value="pulse">FOUR PULSES · AUDIO</option></select><button class="action" id="loadPreset">Načíst ukázku</button></div>
+      <div class="code-wrap"><p class="form-caption">Příkazy mohou mít podobu <code>PATTERN 02</code>, <code>50 02</code> nebo <code>00: 50 02</code>. Návěští: <code>SMYCKA:</code>. Komentář začíná středníkem.</p><textarea id="code" spellcheck="false" aria-label="Editor programu"></textarea>
+        <div class="actions" style="margin-top:11px"><button class="action primary" id="assembleBtn">ASSEMBLE → RAM</button><button class="action" id="dumpBtn">DUMP RAM → TEXT</button><button class="action" id="saveBtn">EXPORT .BIN</button><button class="action" id="importBtn">IMPORT .BIN</button><button class="action warn" id="clearBtn">CLEAR BANK</button><input id="fileInput" type="file" accept=".bin,application/octet-stream" hidden></div>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>MEMORY INSPECTOR</h2><small id="bankName">VIDEO BANK · 00–FF</small></div><div class="memory-outer"><div class="memory-table" id="memTable"></div></div><div class="memory-hint">Kliknutím na bajt vybereš adresu pro WRITE. <span style="color:#ffd88f">Zlatá</span> = vybraná adresa, <span style="color:#f77e67">červený obrys</span> = aktuální PC.</div><div class="api-inline" style="margin:0 16px 18px">MEMORY FORMAT: [OPCODE 8 bit] [ARGUMENT 8 bit]<br>Adresy instrukcí: 00, 02, 04 … FE.<br>Podrobná specifikace: přiložený Markdown.</div></div>
+  </section>
+  <footer class="footer">BITBOX BASIC 1.0 · Offline HTML emulátor · Bez externích knihoven · Ovládání: <span class="kbd">mezerník</span> RUN/STOP, <span class="kbd">N</span> NEXT, <span class="kbd">W</span> WRITE, <span class="kbd">E</span> EXAM (mimo textová pole). Obraz je simulací monochromatického video enginu, nikoli skutečným analogovým PAL signálem. Zvuk se vytváří přímo přes Web Audio API.</footer>
+</div>
+<script>
+'use strict';
+// BITBOX BASIC 1.0. Jediný offline soubor, bez závislostí.
+const $ = id => document.getElementById(id);
+const hx = n => (n & 255).toString(16).toUpperCase().padStart(2,'0');
+const bin = n => (n & 255).toString(2).padStart(8,'0');
+const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
+const signed = n => n >= 128 ? n - 256 : n;
+const OPCODES = {
+  NOP:0x00,HALT:0x01,RESET:0x02,
+  FREQ:0x10,WAVE:0x11,VOLUME:0x12,ATTACK:0x13,DECAY:0x14,GATE:0x15,PULSE:0x16,CRUSH:0x17,NOISE:0x18,LFO_RATE:0x19,LFO_DEPTH:0x1A,FILTER:0x1B,FREQ_A:0x1E,VOL_A:0x1F,AWAIT:0x20,
+  JMP:0x30,JZ:0x31,JNZ:0x32,COUNT:0x33,LOOP:0x34,
+  SET:0x40,ADD:0x41,SUB:0x42,XOR:0x43,RAND:0x44,CMP:0x45,AND:0x46,OR:0x47,
+  PATTERN:0x50,MOTION:0x51,DENSITY:0x52,LEVEL:0x53,SCALE:0x54,GLITCH:0x55,INVERT:0x56,SHIFT:0x57,FEEDBACK:0x58,SEED:0x59,DENS_A:0x5E,GLITCH_A:0x5F,VWAIT:0x60,VJMP:0x70
+};
+const BYCODE = Object.fromEntries(Object.entries(OPCODES).map(([k,v])=>[v,k]));
+const VIDEO_OPS=new Set([0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5E,0x5F,0x60,0x70]);
+const AUDIO_OPS=new Set([0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1E,0x1F,0x20]);
+const PRESETS={
+ glitch:{mode:'VIDEO',name:'GLITCH MACHINE',code:`; Klasický vzor BITBOX 1.0\nORG 00\nPATTERN 02   ; horizontální pruhy\nDENSITY 06   ; 24 pruhů\nMOTION 04    ; 0,25 px / frame\nGLITCH 9A    ; síla 9, pravděpodobnost 10/16\nVWAIT 10     ; 16 snímků\nVJMP 00      ; opakuj`},
+ generative:{mode:'VIDEO',name:'GENERATIVE STRIPES',code:`; Nahodilá hustota pruhů\nORG 00\nPATTERN 02\nSMYCKA:\nRAND 1F\nDENS_A 00\nVWAIT 04\nVJMP SMYCKA`},
+ xor:{mode:'VIDEO',name:'XOR WAVES',code:`; Experiment s XOR, měnící se velikostí motivu\nORG 00\nPATTERN 06\nMOTION 14\nLEVEL D8\nSET 02\nSMYCKA:\nADD 01\nDENS_A 00\nVWAIT 04\nCMP 10\nJNZ SMYCKA\nJMP 06`},
+ randomSound:{mode:'AUDIO',name:'GENERATIVE TONES',code:`; Frekvence podle náhodné hodnoty registru A\nORG 00\nWAVE 01\nVOLUME 80\nSMYCKA:\nRAND 90\nADD 20\nFREQ_A 00\nAWAIT 08\nJMP SMYCKA`},
+ pulse:{mode:'AUDIO',name:'FOUR PULSES',code:`; Čtyři údery a pauza\nORG 00\nWAVE 02\nFREQ 40\nVOLUME A0\nOPAKUJ:\nCOUNT 04\nPULZ:\nGATE 01\nAWAIT 04\nGATE 00\nAWAIT 04\nLOOP PULZ\nAWAIT 20\nJMP OPAKUJ`}
+};
+const mem={VIDEO:new Uint8Array(256),AUDIO:new Uint8Array(256)};
+const vm={mode:'VIDEO',running:false,step:false,monitor:'LIVE',speed:1,sw:0x50,editAddr:0,pc:0,A:0,C:0,Z:true,waitMs:0,lastMS:0,frameMS:0,frame:0,phase:0,instr:0,trace:[],monAddr:0,monData:0,monMS:0,scanAddr:0,err:'',rng:0x12345678};
+function initVideo(){return {pattern:0,density:6,motion:0,level:255,scale:1,glitch:0,invert:false,shift:0,feedback:0,seed:0,glitchRng:0x32a5b911,history:new Uint8Array(256*192)}}
+let vid=initVideo();
+function initAudio(){return {freq:200,wave:0,volume:0,attack:0,decay:0,gate:true,pulse:0.5,crush:8,noise:0,lfoRate:0,lfoDepth:0,filter:6000,phase:0,lfoPhase:0,env:1}}
+let synth=initAudio();
+let audioCtx=null, processor=null, filterNode=null, masterNode=null, audioEnabled=false;
+let audioScope=new Float32Array(640);let scopeTick=0;
+let currentBank=()=>mem[vm.mode];
+let r32=()=>{let x=vm.rng>>>0;x^=x<<13;x^=x>>>17;x^=x<<5;vm.rng=x>>>0;return (vm.rng>>>0)/4294967296};
+let videoRand=()=>{let x=vid.glitchRng>>>0;x^=x<<13;x^=x>>>17;x^=x<<5;vid.glitchRng=x>>>0;return (vid.glitchRng>>>0)/4294967296};
+function log(msg,kind='info'){let line=document.createElement('div');line.className=kind;line.textContent=`[${new Date().toLocaleTimeString('cs-CZ')}] ${msg}`;$('log').prepend(line);while($('log').children.length>28)$('log').lastChild.remove()}
+function err(msg){vm.err=msg;stop(true);$('errorBanner').textContent=msg;$('errorBanner').classList.add('show');log(msg,'error')}
+function clearError(){vm.err='';$('errorBanner').classList.remove('show')}
+function trace(addr,data){if(vm.trace.length>=48)vm.trace.splice(0,vm.trace.length-40);vm.trace.push([addr,data])}
+function readInstruction(){let p=vm.pc;if(p<0||p>254||p%2){err('CHYBA PC: adresa '+hx(p)+' není platná sudá instrukční adresa.');return null}let op=currentBank()[p],arg=currentBank()[p+1];trace(p,op);trace(p+1,arg);return [p,op,arg]}
+function jump(dest){if(dest%2){err('CHYBA SKOKU: cíl '+hx(dest)+' není sudá adresa.');return false}vm.pc=dest;return true}
+function execute(){if(!vm.running)return false;let instr=readInstruction();if(!instr)return false;let [addr,op,arg]=instr;
+ if(!(op in BYCODE)){err('NEZNÁMÁ INSTRUKCE '+hx(op)+' na adrese '+hx(addr));return false}
+ if(VIDEO_OPS.has(op)&&vm.mode!=='VIDEO'){err('VIDEO příkaz '+BYCODE[op]+' v AUDIO bance na adrese '+hx(addr));return false}
+ if(AUDIO_OPS.has(op)&&vm.mode!=='AUDIO'){err('AUDIO příkaz '+BYCODE[op]+' ve VIDEO bance na adrese '+hx(addr));return false}
+ // PC může ukazovat FE, po vykonání bez skoku by pokračoval přes hranici (chyba při dalším fetchi).
+ vm.pc=addr+2;vm.instr++;
+ switch(op){
+ case 0x00:break;
+ case 0x01:stop();log('HALT na '+hx(addr));return false;
+ case 0x02: if(vm.mode==='VIDEO'){vid=initVideo();drawVideoFrame()}else{synth=initAudio();updateAudioFilter()}break;
+ case 0x30: case 0x70:if(!jump(arg))return false;break;
+ case 0x31:if(vm.Z&&!jump(arg))return false;break;
+ case 0x32:if(!vm.Z&&!jump(arg))return false;break;
+ case 0x33:if(arg===0){err('COUNT 00 je neplatný: počítadlo musí být 01–FF.');return false}vm.C=arg;break;
+ case 0x34:if(vm.C===0){err('LOOP bez nastaveného čítače COUNT na '+hx(addr));return false}vm.C--;if(vm.C!==0&&!jump(arg))return false;break;
+ case 0x40:vm.A=arg;vm.Z=vm.A===0;break;
+ case 0x41:vm.A=(vm.A+arg)&255;vm.Z=vm.A===0;break;
+ case 0x42:vm.A=(vm.A-arg)&255;vm.Z=vm.A===0;break;
+ case 0x43:vm.A^=arg;vm.Z=vm.A===0;break;
+ case 0x44:vm.A=Math.floor(r32()*(arg+1));vm.Z=vm.A===0;break;
+ case 0x45:vm.Z=vm.A===arg;break;
+ case 0x46:vm.A&=arg;vm.Z=vm.A===0;break;
+ case 0x47:vm.A|=arg;vm.Z=vm.A===0;break;
+ case 0x50:if(arg>8){err('PATTERN podporuje 00–08, zadáno '+hx(arg));return false}vid.pattern=arg;break;
+ case 0x51:vid.motion=signed(arg)/16;break;
+ case 0x52:vid.density=arg;break;
+ case 0x53:vid.level=arg;break;
+ case 0x54:vid.scale=1+Math.floor(arg/32);break;
+ case 0x55:vid.glitch=arg;break;
+ case 0x56:vid.invert=arg!==0;break;
+ case 0x57:vid.shift=signed(arg);break;
+ case 0x58:vid.feedback=arg;break;
+ case 0x59:vid.seed=arg;vid.glitchRng=(0x9e3779b9^Math.imul(arg+1,0x45d9f3b))>>>0;vm.rng=(0x5f356495^Math.imul(arg+1,0x27d4eb2d))>>>0;break;
+ case 0x5E:vid.density=vm.A;break;
+ case 0x5F:vid.glitch=vm.A;break;
+ case 0x60:vm.waitMs=arg*40/vm.speed;break;
+ case 0x10:synth.freq=200+arg*10;break;
+ case 0x11:if(arg>5){err('WAVE podporuje 00–05, zadáno '+hx(arg));return false}synth.wave=arg;break;
+ case 0x12:synth.volume=arg/255;break;
+ case 0x13:synth.attack=arg*4;break;
+ case 0x14:synth.decay=arg*4;break;
+ case 0x15:if(arg>1){err('GATE musí být 00 nebo 01.');return false}if(arg===1&&!synth.gate)synth.env=0;synth.gate=arg===1;break;
+ case 0x16:synth.pulse=clamp(arg/255,.01,.99);break;
+ case 0x17:synth.crush=arg===0?8:clamp(arg,1,8);break;
+ case 0x18:synth.noise=arg/255;break;
+ case 0x19:synth.lfoRate=arg===0?0:0.1+(arg-1)*.05;break;
+ case 0x1A:synth.lfoDepth=arg/255;break;
+ case 0x1B:synth.filter=100+(arg/255)*5900;updateAudioFilter();break;
+ case 0x1E:synth.freq=200+vm.A*10;break;
+ case 0x1F:synth.volume=vm.A/255;break;
+ case 0x20:vm.waitMs=arg*20/vm.speed;break;
+ }
+ return true;
+}
+function start(){clearError();vm.running=true;vm.pc=0;vm.A=0;vm.C=0;vm.Z=true;vm.waitMs=0;vm.instr=0;vm.trace=[];vm.frame=0;vm.frameMS=0;vm.phase=0;vm.rng=0x12345678;vid=initVideo();synth=initAudio();updateAudioFilter();vm.monAddr=0;vm.monData=currentBank()[0];vm.lastMS=performance.now();if(vm.mode==='VIDEO')drawVideoFrame();log('START '+vm.mode+(vm.step?' / STEP':' / AUTO'));renderUI()}
+function stop(fromError=false){let was=vm.running;vm.running=false;vm.waitMs=0;if(was&&!fromError)log('STOP '+vm.mode);renderUI()}
+function doNext(){if(vm.running){if(vm.step){vm.waitMs=0;let before=vm.pc;execute();vm.monAddr=before;vm.monData=currentBank()[before]??0;if(vm.mode==='VIDEO'&&vm.running)drawVideoFrame();renderUI()}}else{vm.editAddr=(vm.editAddr+1)&255;vm.monAddr=vm.editAddr;vm.monData=currentBank()[vm.editAddr];renderUI()}}
+function doExam(){vm.editAddr=vm.sw;vm.monAddr=vm.editAddr;vm.monData=currentBank()[vm.editAddr];log('EXAM '+vm.mode+'['+hx(vm.editAddr)+'] = '+hx(vm.monData));renderUI()}
+function doWrite(){currentBank()[vm.editAddr]=vm.sw;log('WRITE '+vm.mode+'['+hx(vm.editAddr)+'] ← '+hx(vm.sw));if(!vm.running){vm.monAddr=vm.editAddr;vm.monData=vm.sw}renderMemory();renderUI()}
+function switchMode(){let was=vm.running;if(was)stop();vm.mode=vm.mode==='VIDEO'?'AUDIO':'VIDEO';vm.editAddr=0;vm.trace=[];vm.scanAddr=0;vm.monAddr=0;vm.monData=currentBank()[0];if(vm.mode==='AUDIO')blankVideo();log('Přepnuto na '+vm.mode);if(was)start();else renderUI();renderMemory()}
+function tick(now){let dt=clamp(now-(vm.lastMS||now),0,100);vm.lastMS=now;
+ if(vm.running&&!vm.step){if(vm.waitMs>0){vm.waitMs-=dt}else vm.waitMs=0;let budget=64;while(vm.running&&vm.waitMs<=0&&budget>0){execute();budget--}if(vm.running&&budget===0&&vm.waitMs<=0)err('WATCHDOG: 64 instrukcí bez čekání. Vlož VWAIT nebo AWAIT.');}
+ if(vm.running&&vm.mode==='VIDEO'){vm.frameMS+=dt; if(vm.frameMS>=40){vm.frameMS%=40;vm.frame++;vm.phase+=vm.speed;drawVideoFrame()}}
+ if(now-vm.monMS>=100){vm.monMS=now;if(vm.running){if(vm.monitor==='SCAN'){vm.monAddr=vm.scanAddr;vm.monData=currentBank()[vm.scanAddr];vm.scanAddr=(vm.scanAddr+1)&255}else if(!vm.step&&vm.trace.length){let pair=vm.trace.shift();vm.monAddr=pair[0];vm.monData=pair[1]}}
+  renderUI();renderMonitor();renderMemoryHighlights();drawScope();}
+ requestAnimationFrame(tick)
+}
+const ledRefs={address:[],data:[]};
+function buildLEDs(){for(let [part,target] of [['address','ledAddress'],['data','ledData']]){for(let bit=7;bit>=0;bit--){let unit=document.createElement('div');unit.className='led-unit';let bulb=document.createElement('div');bulb.className='led';bulb.setAttribute('aria-hidden','true');ledRefs[part].push(bulb);unit.appendChild(bulb);let t=document.createElement('small');t.textContent=bit;unit.appendChild(t);$(target).appendChild(unit)}}}
+function buildSwitches(){for(let bit=7;bit>=0;bit--){let b=document.createElement('button');b.type='button';b.className='switch-item';b.innerHTML=`<span class="sw-no">D${bit}</span><span class="lever"></span><b>${(vm.sw>>bit)&1}</b>`;b.title='Přepnout bit '+bit;b.setAttribute('aria-label','Datový bit '+bit);b.onclick=()=>{vm.sw^=(1<<bit);renderSwitches()};$('switches').appendChild(b)}}
+function renderSwitches(){[...$('switches').children].forEach((b,i)=>{let val=(vm.sw>>(7-i))&1;b.setAttribute('aria-pressed',String(!!val));b.querySelector('b').textContent=val});$('switchHex').textContent=hx(vm.sw);$('switchBin').textContent=bin(vm.sw)}
+function renderMonitor(){let addr=vm.running?vm.monAddr:vm.editAddr;let data=vm.running?vm.monData:currentBank()[vm.editAddr];for(let i=0;i<8;i++){ledRefs.address[i].classList.toggle('on',!!((addr>>(7-i))&1));ledRefs.data[i].classList.toggle('on',!!((data>>(7-i))&1))}$('addressText').innerHTML=`${hx(addr)} <span>${bin(addr)}</span>`;$('dataText').innerHTML=`${hx(data)} <span>${bin(data)}</span>`}
+function renderUI(){let b=$('runBtn');b.classList.toggle('active',vm.running);b.firstChild.textContent=vm.running?'STOP':'RUN';b.querySelector('small').textContent=vm.running?'ZASTAVIT':'START';$('runDot').classList.toggle('on',vm.running);$('globalRunStatus').textContent=vm.running?'RUNNING':'STOPPED';
+ $('modeBtn').firstChild.textContent=vm.mode;$('monitorBtn').firstChild.textContent=vm.monitor;$('executionBtn').firstChild.textContent=vm.step?'STEP':'AUTO';$('executionBtn').classList.toggle('active',!vm.step);$('modeBtn').classList.toggle('active',vm.mode==='VIDEO');$('monitorBtn').classList.toggle('active',vm.monitor==='LIVE');
+ $('pcOut').textContent=hx(vm.pc);$('aOut').textContent=hx(vm.A);$('cOut').textContent=hx(vm.C);$('zOut').textContent=vm.Z?'1':'0';$('monOut').textContent=vm.running?vm.monitor:'EXAM';$('editOut').textContent=hx(vm.editAddr);$('bankName').textContent=vm.mode+' BANK · 00–FF';$('outputMode').textContent=vm.mode==='VIDEO'?'MONO VIDEO · EMULACE':'8-BIT MONO · WEB AUDIO';$('screenBadge').textContent=vm.mode==='AUDIO'?'VIDEO · INACTIVE':vm.running?'VIDEO · LIVE':'VIDEO · HOLD';$('freqOut').textContent=Math.round(synth.freq)+' Hz';$('patOut').textContent=hx(vid.pattern);$('frameOut').textContent=vm.frame.toLocaleString('cs-CZ');$('instrOut').textContent=vm.instr.toLocaleString('cs-CZ');$('audioBtn').textContent=audioEnabled?'◉ ZVUK ZAPNUTÝ':'◉ ZAPNOUT ZVUK';$('audioBtn').classList.toggle('good',!audioEnabled);$('audioHint').textContent=audioEnabled?'Web Audio aktivní. Zvuk se ozývá pouze při RUN v AUDIO režimu a při nenulové hlasitosti.':'Klikni na ZAPNOUT ZVUK. Prohlížeče neumožňují spustit zvuk automaticky bez akce uživatele.';
+ renderMonitor()}
+const memCells=[];
+function buildMemory(){let host=$('memTable');let blank=document.createElement('div');blank.className='memory-head';blank.textContent='';host.appendChild(blank);for(let c=0;c<16;c++){let hd=document.createElement('div');hd.className='memory-head';hd.textContent=c.toString(16).toUpperCase();host.appendChild(hd)}for(let row=0;row<16;row++){let head=document.createElement('div');head.className='memory-addr';head.textContent=(row*16).toString(16).toUpperCase().padStart(2,'0');host.appendChild(head);for(let col=0;col<16;col++){let adr=row*16+col;let el=document.createElement('button');el.type='button';el.className='memory-cell';el.title='Adresa '+hx(adr);el.onclick=()=>{vm.editAddr=adr;if(!vm.running){vm.monAddr=adr;vm.monData=currentBank()[adr]}renderUI();renderMemoryHighlights()};host.appendChild(el);memCells.push(el)}}renderMemory()}
+function renderMemory(){let b=currentBank();for(let i=0;i<256;i++){memCells[i].textContent=hx(b[i]);memCells[i].classList.toggle('nonzero',b[i]!==0)}renderMemoryHighlights()}
+function renderMemoryHighlights(){for(let i=0;i<256;i++){let cls=memCells[i].classList;cls.toggle('selected',i===vm.editAddr);cls.toggle('pc',vm.running&&i===vm.pc);cls.toggle('monitored',vm.running&&i===vm.monAddr)}}
+// Renderování 256 × 192 odstínů šedi, 25 snímků/s; analogové CRT se fyzicky neemuluje.
+const canvas=$('screen'), ctx=canvas.getContext('2d',{alpha:false});
+const image=ctx.createImageData(256,192);
+const fpart = x => x-Math.floor(x);
+function drawVideoFrame(){if(vm.mode!=='VIDEO'){return}let W=256,H=192;let t=vm.phase,sc=vid.scale,den=Math.max(1,vid.density*4),m=vid.motion*t,offset=vid.shift;let prob=(vid.glitch&15)/16, intensity=(vid.glitch>>4)*8;
+ let glitchOn=vid.glitch!==0&&videoRand()<prob;
+ let bandY=glitchOn?Math.floor(videoRand()*H):-1;let bandH=glitchOn?4+Math.floor(videoRand()*25):0;let bandDx=glitchOn?Math.round((videoRand()*2-1)*intensity):0;
+ let d=image.data,old=vid.history;let blend=vid.feedback/255;
+ for(let y=0;y<H;y++){
+   let dx=(y>=bandY&&y<bandY+bandH)?bandDx:0;
+   for(let x=0;x<W;x++){
+    let xx=(x+offset+dx+m),yy=(y+m),ux=xx/sc,uy=yy/sc;let v=0;
+    switch(vid.pattern){
+      case 0:v=0;break;
+      case 1:v=videoRand()>.5?255:0;break;
+      case 2:v=Math.floor(fpart(uy*den/H)*2)%2?255:0;break;
+      case 3:v=Math.floor(fpart(ux*den/W)*2)%2?255:0;break;
+      case 4:v=((Math.floor(ux/Math.max(2,18*8/Math.max(1,vid.density)))+Math.floor(uy/Math.max(2,18*8/Math.max(1,vid.density))))&1)?255:0;break;
+      case 5:{let cx=Math.floor(ux/(Math.max(5,38-vid.density/8))),cy=Math.floor(uy/(Math.max(5,38-vid.density/8)));let z=Math.imul(cx,12347)^Math.imul(cy,65419)^vid.seed;v=((z>>>((x+y)&7))&1)?255:0;break}
+      case 6:v=(((Math.floor(ux/Math.max(1,vid.scale))^Math.floor(uy/Math.max(1,vid.scale))^vid.seed)&(Math.max(1,Math.floor(256/den))))!==0)?255:0;break;
+      case 7:{let cellx=Math.floor(ux/8),celly=Math.floor(uy/8);let q=(Math.imul(cellx,173)+Math.imul(celly,97)+vid.seed*17)>>>0;v=(q^(q>>>3)^(q>>>6))&1?255:0;break}
+      case 8:v=(Math.floor(fpart((ux+uy)*den/(W+H))*2)&1)?255:0;break;
+    }
+    if(vid.invert)v=255-v;
+    v=v*vid.level/255;
+    let pos=y*W+x;if(blend>0)v=v*(1-blend)+old[pos]*blend;
+    old[pos]=v;let index=pos*4;d[index]=d[index+1]=d[index+2]=v;d[index+3]=255;
+   }
+ }
+ ctx.putImageData(image,0,0);
+}
+function blankVideo(){vid=initVideo();let d=image.data;for(let i=0;i<d.length;i+=4){d[i]=d[i+1]=d[i+2]=0;d[i+3]=255}ctx.putImageData(image,0,0)}
+// WebAudio: vlastní oscilátor + šum + obálka + bitcrush + BiquadFilter.
+async function enableAudio(){try{if(!audioCtx){let AudioClass=window.AudioContext||window.webkitAudioContext;if(!AudioClass)throw new Error('Web Audio API není dostupné.');audioCtx=new AudioClass();processor=audioCtx.createScriptProcessor(1024,0,1);filterNode=audioCtx.createBiquadFilter();filterNode.type='lowpass';masterNode=audioCtx.createGain();masterNode.gain.value=.32;processor.onaudioprocess=processAudio;processor.connect(filterNode);filterNode.connect(masterNode);masterNode.connect(audioCtx.destination);updateAudioFilter()}
+  if(audioCtx.state!=='running')await audioCtx.resume();audioEnabled=audioCtx.state==='running';log(audioEnabled?'Zvukový engine aktivován.':'AudioContext stále není aktivní.',audioEnabled?'info':'warn');renderUI()}
+ catch(ex){audioEnabled=false;log('Zvuk nelze zapnout: '+ex.message,'error');renderUI()}}
+async function disableAudio(){if(audioCtx){await audioCtx.suspend()}audioEnabled=false;log('Audio ztlumeno.');renderUI()}
+function updateAudioFilter(){if(filterNode&&audioCtx)filterNode.frequency.setTargetAtTime(synth.filter,audioCtx.currentTime,.015)}
+function processAudio(event){let out=event.outputBuffer.getChannelData(0),sr=event.outputBuffer.sampleRate;let active=vm.running&&vm.mode==='AUDIO'&&audioEnabled;let n=out.length;let samples=synth;for(let i=0;i<n;i++){
+ if(!active){out[i]=0;continue}
+ let target=samples.gate?1:0;let ms=target?samples.attack:samples.decay;
+ if(ms===0)samples.env=target;else samples.env=clamp(samples.env+(target?1:-1)/(sr*ms/1000),0,1);
+ let lfo=Math.sin(samples.lfoPhase*2*Math.PI);samples.lfoPhase=fpart(samples.lfoPhase+samples.lfoRate/sr);
+ let hz=clamp(samples.freq*(1+lfo*samples.lfoDepth),10,sr*.45);samples.phase=fpart(samples.phase+hz/sr);
+ let ph=samples.phase;let wave=0;
+ switch(samples.wave){case 0:wave=Math.sin(2*Math.PI*ph);break;case 1:wave=2*ph-1;break;case 2:wave=ph<.5?1:-1;break;case 3:wave=1-4*Math.abs(ph-.5);break;case 4:wave=Math.random()*2-1;break;case 5:wave=ph<samples.pulse?1:-1;break}
+ wave=wave*(1-samples.noise)+(Math.random()*2-1)*samples.noise;
+ if(samples.crush<8){let levels=(1<<samples.crush)-1;wave=Math.round(((wave+1)/2)*levels)/levels*2-1}
+ let value=clamp(wave*samples.volume*samples.env,-1,1);out[i]=value;
+ if(i%(Math.max(1,Math.floor(n/100)))===0)audioScope[scopeTick++%audioScope.length]=value;
+ }}
+const scope=$('scope'),scopeCtx=scope.getContext('2d');
+function drawScope(){let w=scope.width,h=scope.height;scopeCtx.fillStyle='#0a100d';scopeCtx.fillRect(0,0,w,h);scopeCtx.strokeStyle='#264a35';scopeCtx.lineWidth=1;for(let i=1;i<=7;i++){let x=i*w/8;scopeCtx.beginPath();scopeCtx.moveTo(x,0);scopeCtx.lineTo(x,h);scopeCtx.stroke()}for(let i=1;i<=3;i++){let y=i*h/4;scopeCtx.beginPath();scopeCtx.moveTo(0,y);scopeCtx.lineTo(w,y);scopeCtx.stroke()}
+ scopeCtx.strokeStyle='#a7e39c';scopeCtx.lineWidth=1.8;scopeCtx.beginPath();for(let x=0;x<w;x++){let idx=(scopeTick+x)%audioScope.length;let v=audioScope[idx]||0;let y=h/2-v*h*.43;if(x===0)scopeCtx.moveTo(x,y);else scopeCtx.lineTo(x,y)}scopeCtx.stroke();if(!audioEnabled||vm.mode!=='AUDIO'){scopeCtx.font='12px monospace';scopeCtx.fillStyle='#5f9278';scopeCtx.fillText(audioEnabled?'AUDIO REŽIM NEAKTIVNÍ':'ZVUK VYPNUT — KLIKNI ZAPNOUT ZVUK',13,19)}}
+// Dvouprůchodový assembler. Všechna neoznačená čísla jsou HEX, i 10 znamená 0x10.
+function valueOf(token,labels,lineno){if(!token)throw Error('Řádek '+lineno+': chybí parametr');let v,up=token.toUpperCase();if(Object.hasOwn(labels,up))v=labels[up];else if(/^%[01]{1,8}$/.test(up))v=parseInt(up.slice(1),2);else if(/^0D[0-9]+$/.test(up))v=parseInt(up.slice(2),10);else if(/^\$[0-9A-F]{1,2}$/.test(up))v=parseInt(up.slice(1),16);else if(/^(?:0X)?[0-9A-F]{1,2}$/.test(up))v=parseInt(up.replace(/^0X/,''),16);else throw Error('Řádek '+lineno+': neznámý parametr '+token);if(!Number.isInteger(v)||v<0||v>255)throw Error('Řádek '+lineno+': mimo rozsah 00–FF');return v}
+function parseAsm(code){let labels={},records=[],pc=0,source=code.replace(/\r/g,'').split('\n');for(let i=0;i<source.length;i++){
+ let line=source[i].replace(/;.*/, '').replace(/#.*/,'').trim();if(!line)continue;
+ let adr=line.match(/^([0-9A-Fa-f]{2}):\s*/);if(adr){pc=parseInt(adr[1],16);line=line.slice(adr[0].length).trim();if(!line)continue}
+ while(true){let lm=line.match(/^([A-Za-z_][A-Za-z_0-9]*):\s*/);if(!lm)break;let name=lm[1].toUpperCase();if(Object.hasOwn(labels,name))throw Error('Řádek '+(i+1)+': duplicitní návěští '+name);labels[name]=pc;line=line.slice(lm[0].length).trim()}if(!line)continue;
+ let toks=line.replace(/,/g,' ').split(/\s+/).filter(Boolean);let op=toks[0].toUpperCase();if(op==='ORG'){if(toks.length!==2)throw Error('Řádek '+(i+1)+': ORG potřebuje adresu');pc=valueOf(toks[1],labels,i+1);continue}
+ let bytes=op==='DB'?toks.slice(1):[...toks];if(op!=='DB'&&Object.hasOwn(OPCODES,op)){if(toks.length>2)throw Error('Řádek '+(i+1)+': příliš mnoho parametrů');bytes=[hx(OPCODES[op]),toks[1]||'00']}
+ else if(op!=='DB'&&toks.length!==2)throw Error('Řádek '+(i+1)+': použij INSTRUKCE PARAMETR nebo dvě HEX hodnoty');
+ if(!bytes.length)throw Error('Řádek '+(i+1)+': DB potřebuje hodnotu');if(pc<0||pc+bytes.length>256)throw Error('Řádek '+(i+1)+': program překračuje paměť 256 B');records.push({pc,bytes,line:i+1});pc+=bytes.length;
+ }
+ let result=new Uint8Array(256),written=new Set();for(const r of records){for(let j=0;j<r.bytes.length;j++){let p=r.pc+j;if(written.has(p))throw Error('Řádek '+r.line+': adresa '+hx(p)+' je zapsaná dvakrát');written.add(p);result[p]=valueOf(r.bytes[j],labels,r.line)}}return {data:result,bytes:written.size,labels}
+}
+function assemble(){try{let result=parseAsm($('code').value);mem[vm.mode].set(result.data);log('ASSEMBLE '+vm.mode+': '+result.bytes+' bajtů, '+Object.keys(result.labels).length+' návěští.');vm.editAddr=0;renderMemory();renderUI();clearError()}catch(e){log('ASSEMBLER: '+e.message,'error');$('errorBanner').textContent='ASSEMBLER: '+e.message;$('errorBanner').classList.add('show')}}
+function dumpRam(){let data=currentBank(),last=255;while(last>0&&data[last]===0)last--;last=Math.min(255,(Math.floor(last/2)+1)*2-1);let lines=['; BITBOX '+vm.mode+' RAM DUMP','; Dvojice bajtů na adresu.'];for(let i=0;i<=last;i+=2)lines.push(`${hx(i)}: ${hx(data[i])} ${hx(data[i+1]||0)}  ; ${BYCODE[data[i]]||'DB'} ${hx(data[i+1]||0)}`);$('code').value=lines.join('\n');log('RAM DUMP '+vm.mode+' do editoru.')}
+function loadPreset(){let p=PRESETS[$('preset').value];if(vm.running)stop();vm.mode=p.mode;if(vm.mode==='AUDIO')blankVideo();vm.editAddr=0;$('code').value=p.code;assemble();log('Ukázka: '+p.name);renderUI()}
+function downloadBin(){let blob=new Blob([currentBank()],{type:'application/octet-stream'});let a=document.createElement('a');let url=URL.createObjectURL(blob);a.href=url;a.download='bitbox-'+vm.mode.toLowerCase()+'.bin';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function importBin(file){if(!file)return;file.arrayBuffer().then(buf=>{if(buf.byteLength>256)throw Error('Soubor má '+buf.byteLength+' B, maximum 256 B');let a=new Uint8Array(256);a.set(new Uint8Array(buf));mem[vm.mode].set(a);renderMemory();renderUI();log('IMPORT '+file.name+' ('+buf.byteLength+' B) do '+vm.mode)}).catch(e=>log('Import selhal: '+e.message,'error'))}
+function bindEvents(){$('examBtn').onclick=doExam;$('writeBtn').onclick=doWrite;$('nextBtn').onclick=doNext;$('runBtn').onclick=()=>vm.running?stop():start();$('modeBtn').onclick=switchMode;$('monitorBtn').onclick=()=>{vm.monitor=vm.monitor==='LIVE'?'SCAN':'LIVE';vm.scanAddr=0;vm.trace=[];log('MONITOR '+vm.monitor);renderUI()};$('executionBtn').onclick=()=>{vm.step=!vm.step;vm.waitMs=0;vm.trace=[];log('EXECUTION '+(vm.step?'STEP':'AUTO'));renderUI()};$('speed').oninput=e=>{const old=vm.speed;const next=Math.pow(4,(Number(e.target.value)-50)/50);if(vm.waitMs>0)vm.waitMs*=old/next;vm.speed=next;$('speedOut').textContent=vm.speed.toFixed(2)+'×'};
+ $('audioBtn').onclick=()=>audioEnabled?disableAudio():enableAudio();$('silenceBtn').onclick=()=>{synth.volume=0;synth.gate=false;log('Hlasitost a GATE = 0');renderUI()};$('assembleBtn').onclick=assemble;$('dumpBtn').onclick=dumpRam;$('loadPreset').onclick=loadPreset;$('saveBtn').onclick=downloadBin;$('importBtn').onclick=()=>$('fileInput').click();$('fileInput').onchange=e=>importBin(e.target.files[0]);$('clearBtn').onclick=()=>{if(vm.running)stop();currentBank().fill(0);vm.editAddr=0;renderMemory();renderUI();log('CLEAR BANK '+vm.mode)};
+ window.addEventListener('keydown',e=>{let el=e.target;if(el instanceof HTMLElement&&(el.matches('input,textarea,select')||el.isContentEditable))return;if(e.altKey||e.ctrlKey||e.metaKey||e.repeat)return;let k=e.key.toLowerCase();if(e.code==='Space'){e.preventDefault();vm.running?stop():start()}else if(k==='n')doNext();else if(k==='e')doExam();else if(k==='w')doWrite()})}
+function boot(){buildLEDs();buildSwitches();buildMemory();bindEvents();blankVideo();vm.lastMS=performance.now();loadPreset();renderSwitches();renderMonitor();drawScope();log('BITBOX READY. Program: '+vm.mode);requestAnimationFrame(tick)}
+boot();
+</script>
+</body>
+</html>

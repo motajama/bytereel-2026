@@ -1,0 +1,44 @@
+[
+  {
+    "name": "video-glitch",
+    "bank": "VIDEO",
+    "source": "video-glitch.asm",
+    "binary": "video-glitch.bin",
+    "used_bytes": 12
+  },
+  {
+    "name": "piezo-pulse",
+    "bank": "VIDEO",
+    "source": "piezo-pulse.asm",
+    "binary": "piezo-pulse.bin",
+    "used_bytes": 10
+  },
+  {
+    "name": "uart-echo",
+    "bank": "VIDEO",
+    "source": "uart-echo.asm",
+    "binary": "uart-echo.bin",
+    "used_bytes": 10
+  },
+  {
+    "name": "uart-transmit",
+    "bank": "VIDEO",
+    "source": "uart-transmit.asm",
+    "binary": "uart-transmit.bin",
+    "used_bytes": 8
+  },
+  {
+    "name": "audio-pulses",
+    "bank": "AUDIO",
+    "source": "audio-pulses.asm",
+    "binary": "audio-pulses.bin",
+    "used_bytes": 20
+  },
+  {
+    "name": "uart-audio",
+    "bank": "AUDIO",
+    "source": "uart-audio.asm",
+    "binary": "uart-audio.bin",
+    "used_bytes": 14
+  }
+]

@@ -1,0 +1,6 @@
+; byteREEL 2026 / ISA 2.0 / VIDEO
+UTIME 64
+RX
+JZ 02
+TX_A
+JMP 02

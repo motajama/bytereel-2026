@@ -1,0 +1,5 @@
+; byteREEL 2026 / ISA 2.0 / VIDEO
+TX 55
+TX AA
+WAIT 64
+JMP 00

@@ -1,0 +1,12 @@
+# Local serial capture (this session produced undecodable binary data).
+/screenlog.0
+/.DS_Store
+/backups/
+/CODEX_PROMPT.md
+
+# Reproducible build metadata; retain the flashable firmware images.
+/firmware/build/*.elf
+/firmware/build/*.map
+/firmware/build-littlefs-test/
+__pycache__/
+*.py[cod]

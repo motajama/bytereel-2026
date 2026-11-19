@@ -1,0 +1,4 @@
+PASS: 59 unique opcode; all 45 legacy codes retained; HEX/BIN consistent.
+PASS: partition aligned, no overlap, end=4 MiB; 6 examples match 256-byte golden images.
+PASS: paired slot JSON source/bytecode consistent. Firmware runtime/hardware NOT TESTED (specification package).
+PASS: ESP32 gen_esp32part.py parsed and verified partitions.csv.

@@ -1,0 +1,366 @@
+% !TeX program = lualatex
+% Samostatny zdroj. Preklad: lualatex bitbox-manual.tex
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,geometry,xcolor,booktabs,tabularx,array,fancyhdr,newunicodechar}
+\geometry{left=21mm,right=21mm,top=22mm,bottom=21mm,headheight=15pt}
+\definecolor{ink}{HTML}{19333A}\definecolor{accent}{HTML}{99502E}\definecolor{pale}{HTML}{F2F2EC}
+
+\setlength{\parindent}{0pt}\setlength{\parskip}{5pt}\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.23}\raggedright\color{ink}
+\newcommand{\tagline}[1]{{\sffamily\bfseries\color{accent}\small #1}\par}
+\newcommand{\titleline}[1]{{\sffamily\bfseries\fontsize{25}{29}\selectfont #1\par}\vspace{2mm}}
+\newcommand{\sub}[1]{\par\vspace{2mm}{\sffamily\bfseries\large #1\par}\nobreak}
+\newcommand{\note}[1]{\par\vspace{2mm}\noindent\colorbox{pale}{\parbox{.96\linewidth}{\raggedright #1}}\par}
+
+\newunicodechar{á}{\'{a}}
+\newunicodechar{č}{\v{c}}
+\newunicodechar{ď}{\v{d}}
+\newunicodechar{é}{\'{e}}
+\newunicodechar{ě}{\v{e}}
+\newunicodechar{í}{\'{i}}
+\newunicodechar{ň}{\v{n}}
+\newunicodechar{ó}{\'{o}}
+\newunicodechar{ř}{\v{r}}
+\newunicodechar{š}{\v{s}}
+\newunicodechar{ť}{\v{t}}
+\newunicodechar{ú}{\'{u}}
+\newunicodechar{ů}{\r{u}}
+\newunicodechar{ý}{\'{y}}
+\newunicodechar{ž}{\v{z}}
+\newunicodechar{Á}{\'{A}}
+\newunicodechar{Č}{\v{C}}
+\newunicodechar{Ď}{\v{D}}
+\newunicodechar{É}{\'{E}}
+\newunicodechar{Ě}{\v{E}}
+\newunicodechar{Í}{\'{I}}
+\newunicodechar{Ň}{\v{N}}
+\newunicodechar{Ó}{\'{O}}
+\newunicodechar{Ř}{\v{R}}
+\newunicodechar{Š}{\v{S}}
+\newunicodechar{Ť}{\v{T}}
+\newunicodechar{Ú}{\'{U}}
+\newunicodechar{Ů}{\r{U}}
+\newunicodechar{Ý}{\'{Y}}
+\newunicodechar{Ž}{\v{Z}}
+\pagestyle{fancy}\fancyhf{}\lhead{\sffamily BITBOX BASIC}\rhead{\sffamily Programátorská příručka}\rfoot{\sffamily\thepage}
+\pdfextension mapfile {+lm.map}
+\begin{document}
+\tagline{JAZYK 1.0  /  NÁVRH PANELU 1.1}
+\titleline{BITBOX BASIC}
+{\sffamily\Large Programování obrazem, zvukem a osmi páčkami}
+
+Nastav na páčkách \texttt{0101 0000} a zapiš bajt. Pak zapiš \texttt{0000 0010}. Dohromady říkají obrazovému generátoru, aby vykreslil vodorovné pruhy. Stejných osm páček tak jednou určuje příkaz a podruhé jeho parametr. Rozhoduje místo, kam oba bajty zapíšeš.
+
+\sub{Jak číst tuto příručku}
+{\small\begin{tabularx}{\linewidth}{@{}lX@{}}\toprule
+\textbf{Strana} & \textbf{Co na ní najdeš}\\\midrule
+2 & Bajt pod prsty. Převod HEX na osm poloh páček.\\
+3 & Obsluha panelu, monitor paměti a ukládání.\\
+4 & První obraz. Zápis šesti bajtů a oprava jediného z nich.\\
+5 & Pohyblivé pruhy. Návěští, náhoda a rozklad efektu GLITCH.\\
+6 & Čtyři zvukové pulzy. Výška, délka a počítaná smyčka.\\
+7 & Stoupající tóny. Registr, porovnání a podmíněný skok.\\
+8--10 & Úplná instrukční sada. Společné příkazy, VIDEO a AUDIO.\\
+11 & Práce s emulátorem, časování a hledání chyb.\\
+12 & Zadní konektor GX12-3 pro čtečku štítků a magnetofonový adaptér.\\
+\bottomrule\end{tabularx}}\par
+\sub{Dvě verze na pracovním stole}
+Instrukční sada 1.0 má 45 příkazů. Jejich kódy a výpisy čtyř lekcí vycházejí z assembleru a interpretu v souboru \texttt{bitbox-emulator.html}. Ukázky můžeš vyzkoušet v prohlížeči.
+
+Panel 1.1 je návrh fyzického nástroje se třemi vratnými páčkami. Jeho povely WRITE+, HOME, práce se sloty a stupnice IPS popisují domluvené ovládání budoucího firmwaru. Chování hotového emulátoru uvádíme zvlášť tam, kde se liší.
+
+\note{Pro první pokus otevři emulátor, zvol STOP a VIDEO a přejdi na stranu 4. Pro zadávání páčkami si vedle výpisu nech převodní tabulku ze strany 2.}
+\clearpage
+\tagline{ZÁKLADY}
+\titleline{Bajt pod prsty}
+Zleva doprava čti páčky D7 až D0. Jednička znamená páčku v poloze 1, nula v poloze 0. Mezery v binárním zápisu pomáhají číst čtveřice. Na panelu žádná mezera vlastní páčku nemá.
+
+{\small\begin{tabularx}{\linewidth}{@{}Xrrrrrrrr@{}}\toprule
+\textbf{Bit} & \textbf{D7} & \textbf{D6} & \textbf{D5} & \textbf{D4} & \textbf{D3} & \textbf{D2} & \textbf{D1} & \textbf{D0}\\\midrule
+Váha & 128 & 64 & 32 & 16 & 8 & 4 & 2 & 1\\
+Příklad 9A & 1 & 0 & 0 & 1 & 1 & 0 & 1 & 0\\
+\bottomrule\end{tabularx}}\par
+\sub{Jedna číslice HEX odpovídá čtyřem páčkám}
+{\small\begin{tabularx}{\linewidth}{@{}llXllX@{}}\toprule
+\textbf{HEX} & \textbf{BIN} & \textbf{Desítkově} & \textbf{HEX} & \textbf{BIN} & \textbf{Desítkově}\\\midrule
+\texttt{0} & \texttt{0000} & 0 & \texttt{8} & \texttt{1000} & 8\\
+\texttt{1} & \texttt{0001} & 1 & \texttt{9} & \texttt{1001} & 9\\
+\texttt{2} & \texttt{0010} & 2 & \texttt{A} & \texttt{1010} & 10\\
+\texttt{3} & \texttt{0011} & 3 & \texttt{B} & \texttt{1011} & 11\\
+\texttt{4} & \texttt{0100} & 4 & \texttt{C} & \texttt{1100} & 12\\
+\texttt{5} & \texttt{0101} & 5 & \texttt{D} & \texttt{1101} & 13\\
+\texttt{6} & \texttt{0110} & 6 & \texttt{E} & \texttt{1110} & 14\\
+\texttt{7} & \texttt{0111} & 7 & \texttt{F} & \texttt{1111} & 15\\
+\bottomrule\end{tabularx}}\par
+Pro \texttt{9A} najdi nejdřív \texttt{9} a nastav D7--D4 na \texttt{1001}. Pak najdi \texttt{A} a nastav D3--D0 na \texttt{1010}. Součet vah zdvižených páček je 128 + 16 + 8 + 2 = 154. Zápisy \texttt{9A}, \texttt{1001 1010} a desítkové 154 tedy označují tutéž hodnotu.
+
+\sub{Adresa a obsah}
+Každá banka má 256 adres od \texttt{00} do \texttt{FF}. Jedna adresa uchová jeden bajt. Instrukce zabírá dvě sousední adresy. Na sudé leží operační kód, hned za ním argument. Poslední instrukce může začít na \texttt{FE} a v bance se jich vejde nejvýše 128.
+
+\note{Zkus sám: Jak nastavíš \texttt{A5}? Kde leží argument příkazu začínajícího na \texttt{0E}?\par Ověření: \texttt{1010 0101}. Argument leží na \texttt{0F}, další příkaz začíná na \texttt{10}.}
+\clearpage
+\tagline{OBSLUHA  /  PANEL 1.1}
+\titleline{Co dělají páčky a LED}
+{\small\begin{tabularx}{\linewidth}{@{}llX@{}}\toprule
+\textbf{Páčka} & \textbf{Poloha} & \textbf{Účinek}\\\midrule
+RUN / STOP & RUN & Spustí zvolenou banku od adresy 00. STOP běh zastaví.\\
+VIDEO / AUDIO & obě & Vybírá jednu ze dvou samostatných programových bank.\\
+LIVE / SCAN & LIVE & LED sledují načtené bajty. SCAN prochází celou paměť bez ohledu na cestu programu.\\
+AUTO / STEP & STEP & V RUN provede každé stisknutí NEXT jednu celou instrukci. AUTO nechá program běžet.\\
+EDIT / MEMORY & EDIT & První dvě vratné páčky ovládají adresování a zápis. MEMORY přepne první páčku na SAVE / LOAD.\\
+EXAM / NEXT & v EDIT & EXAM převezme D7--D0 jako adresu. NEXT ve STOP posune editor o jeden bajt.\\
+WRITE / WRITE+ & v EDIT & WRITE zapíše bajt na adresu editoru. WRITE+ zapíše a posune editor o jednu adresu. V MEMORY je páčka neaktivní.\\
+HOME / RESET & krátce & HOME vrátí editor na 00. RESET vynuluje stav virtuálního stroje a zachová program.\\
+\bottomrule\end{tabularx}}\par
+\sub{Jak číst obě řady světel}
+Ve STOP ukazuje horní řada adresu editoru, dolní uložený bajt. Přestavením datových páček pouze připravíš hodnotu. Obsah paměti se změní až zápisem. V emulátoru při RUN + STEP + LIVE sleduješ adresu a kód právě provedené instrukce. Při AUTO + LIVE přichází na řadu také bajt argumentu.
+
+\sub{Uložení obou bank do jednoho slotu}
+Na navrženém panelu přejdi do STOP a MEMORY. Třemi pravými páčkami D2--D0 vyber slot od \texttt{000} do \texttt{111} (0--7). První vratnou páčku podrž dvě sekundy na SAVE pro uložení obou bank; polohou LOAD obě banky obnovíš z vybraného slotu. Pak se vrať do EDIT.
+
+\note{Krátký RESET zachová paměť. Podržením RESET po dobu 3 s ve STOP vyvoláš CLR a vymažeš právě vybranou pracovní banku. Uložené sloty zůstanou zachované. Instrukce \texttt{RESET 00} v programu má vlastní význam (s. 8).}
+\clearpage
+\tagline{LEKCE 1  /  VIDEO}
+\titleline{Napiš první obraz}
+Na jednu sekundu zobraz vodorovné pruhy a zastav interpret. Po zastavení zůstane v emulátoru poslední snímek. Jeden řádek tabulky je jeden příkaz, na panelu ale vyžaduje dva zápisy. Sloupce BIN čti zleva doprava.
+
+{\small\begin{tabularx}{\linewidth}{@{}rllllX@{}}\toprule
+\textbf{Adresa} & \textbf{Instrukce} & \textbf{HEX} & \textbf{BIN kód} & \textbf{BIN argument} & \textbf{}\\\midrule
+\texttt{00} & \texttt{PATTERN 02} & \texttt{50 02} & \texttt{0101 0000} & \texttt{0000 0010} & \\
+\texttt{02} & \texttt{VWAIT 19} & \texttt{60 19} & \texttt{0110 0000} & \texttt{0001 1001} & \\
+\texttt{04} & \texttt{HALT} & \texttt{01 00} & \texttt{0000 0001} & \texttt{0000 0000} & \\
+\bottomrule\end{tabularx}}\par
+\sub{Zadání přímo na panelu}
+1. Zvol STOP, VIDEO a EDIT. Krátce použij HOME. Horní řada LED ukáže \texttt{0000 0000}. V emulátoru nastav všech osm datových páček na nulu a použij EXAM.
+
+2. Nastav \texttt{0101 0000} (50) a stiskni WRITE+. Nastav \texttt{0000 0010} (02) a znovu WRITE+. Tím jsi obsadil adresy 00 a 01. V emulátoru každý pohyb WRITE+ nahraď dvojicí WRITE, NEXT.
+
+3. Stejným způsobem vlož \texttt{60 19 01 00}. Po šesti zápisech s posunem bude editor na \texttt{06}. Pro kontrolu nastav páčky na \texttt{0000 0011} a dej EXAM. Na datových LED se musí objevit \texttt{0001 1001} (19).
+
+4. Zvol LIVE a AUTO a přepni na RUN. Generátor nastaví vzor 02, vyčká a provede HALT. V emulátoru při SPEED 1\ensuremath{\times} odpovídá \texttt{19} desítkovým 25 snímkům po 40 ms.
+
+\sub{Oprav jen argument}
+Ve STOP nastav adresu \texttt{01} a použij EXAM. Potom nastav data \texttt{0000 0011} a dej WRITE. Po dalším RUN uvidíš svislé pruhy. Operační kód \texttt{50} na adrese 00 zůstal stejný.
+
+\note{Zkus sám: Jak získáš šachovnici? Na adrese \texttt{01} zapiš \texttt{04} = \texttt{0000 0100}. Chceš-li sledovat pořadí operací, zvol STEP před RUN a každou instrukci vykonej pomocí NEXT.}
+\clearpage
+\tagline{LEKCE 2  /  VIDEO}
+\titleline{Pruhy, které mění hustotu}
+Začni svislými pruhy. Po každém průchodu smyčkou vyber novou hustotu a nech obraz chvíli běžet. V tabulce stojí číselná adresa skoku, takže výpis můžeš přímo opsat do assembleru nebo zadat na panelu.
+
+{\small\begin{tabularx}{\linewidth}{@{}rllllX@{}}\toprule
+\textbf{Adresa} & \textbf{Instrukce} & \textbf{HEX} & \textbf{BIN kód} & \textbf{BIN argument} & \textbf{}\\\midrule
+\texttt{00} & \texttt{PATTERN 03} & \texttt{50 03} & \texttt{0101 0000} & \texttt{0000 0011} & \\
+\texttt{02} & \texttt{MOTION 04} & \texttt{51 04} & \texttt{0101 0001} & \texttt{0000 0100} & \\
+\texttt{04} & \texttt{RAND 07} & \texttt{44 07} & \texttt{0100 0100} & \texttt{0000 0111} & \\
+\texttt{06} & \texttt{DENS\_A 00} & \texttt{5E 00} & \texttt{0101 1110} & \texttt{0000 0000} & \\
+\texttt{08} & \texttt{GLITCH 94} & \texttt{55 94} & \texttt{0101 0101} & \texttt{1001 0100} & \\
+\texttt{0A} & \texttt{VWAIT 08} & \texttt{60 08} & \texttt{0110 0000} & \texttt{0000 1000} & \\
+\texttt{0C} & \texttt{JMP 04} & \texttt{30 04} & \texttt{0011 0000} & \texttt{0000 0100} & \\
+\bottomrule\end{tabularx}}\par
+\sub{Co se vrací a co trvá}
+Příkazy na 00 a 02 nastaví vzor a pohyb jednou. \texttt{JMP 04} pak pokaždé vrátí PC na RAND. Ten vybere do registru A celé číslo od 0 do 7 včetně. \texttt{DENS\_A 00} předá hodnotu z A generátoru. Následující argument 00 je povinný bajt instrukce, i když hodnotu hustoty nese registr.
+
+V assembleru můžeš před RAND vložit samostatný řádek \texttt{ZMEN:} a na konec napsat \texttt{JMP ZMEN}. Assembler dosadí adresu 04. V paměti návěští nezabere žádné místo.
+
+\sub{Jak číst GLITCH 94}
+Horní čtveřice \texttt{1001} nastavuje sílu zásahu 9. Dolní \texttt{0100} dává pravděpodobnost 4/16 pro každý snímek. V zasaženém snímku se část svislých pruhů vodorovně posune. Nová hustota přichází po \texttt{VWAIT 08}, při 1\ensuremath{\times} tedy přibližně každých 320 ms.
+
+\note{Pokus: Na adrese \texttt{09} změň \texttt{94} na \texttt{9C} = \texttt{1001 1100}. Síla zůstane 9, pravděpodobnost vzroste na 12/16. Pro změnu směru pohybu zapiš na adresu \texttt{03} hodnotu \texttt{FC} místo \texttt{04}.}
+\clearpage
+\tagline{LEKCE 3  /  AUDIO}
+\titleline{Čtyři pulzy na 440 Hz}
+Přepni do AUDIO. V emulátoru zapni zvuk tlačítkem ZAPNOUT ZVUK a nastav SPEED na 1\ensuremath{\times}. Program čtyřikrát otevře a zavře tón. Výšku volí FREQ, dobu znění určuje AWAIT.
+
+{\small\begin{tabularx}{\linewidth}{@{}rllllX@{}}\toprule
+\textbf{Adresa} & \textbf{Instrukce} & \textbf{HEX} & \textbf{BIN kód} & \textbf{BIN argument} & \textbf{}\\\midrule
+\texttt{00} & \texttt{WAVE 00} & \texttt{11 00} & \texttt{0001 0001} & \texttt{0000 0000} & \\
+\texttt{02} & \texttt{FREQ 18} & \texttt{10 18} & \texttt{0001 0000} & \texttt{0001 1000} & \\
+\texttt{04} & \texttt{VOLUME 40} & \texttt{12 40} & \texttt{0001 0010} & \texttt{0100 0000} & \\
+\texttt{06} & \texttt{COUNT 04} & \texttt{33 04} & \texttt{0011 0011} & \texttt{0000 0100} & \\
+\texttt{08} & \texttt{GATE 01} & \texttt{15 01} & \texttt{0001 0101} & \texttt{0000 0001} & \\
+\texttt{0A} & \texttt{AWAIT 05} & \texttt{20 05} & \texttt{0010 0000} & \texttt{0000 0101} & \\
+\texttt{0C} & \texttt{GATE 00} & \texttt{15 00} & \texttt{0001 0101} & \texttt{0000 0000} & \\
+\texttt{0E} & \texttt{AWAIT 05} & \texttt{20 05} & \texttt{0010 0000} & \texttt{0000 0101} & \\
+\texttt{10} & \texttt{LOOP 08} & \texttt{34 08} & \texttt{0011 0100} & \texttt{0000 1000} & \\
+\texttt{12} & \texttt{HALT} & \texttt{01 00} & \texttt{0000 0001} & \texttt{0000 0000} & \\
+\bottomrule\end{tabularx}}\par
+\sub{Proč právě 18 a 05?}
+Parametr výšky \texttt{18} je desítkových 24. Frekvence je 200 + 10 \ensuremath{\times} 24 = 440 Hz. \texttt{VOLUME 40} nastaví 64/255 plné úrovně. Výchozí GATE je už otevřená a hlasitost na začátku nulová. Oba časy obálky jsou po startu nulové.
+
+Každý \texttt{AWAIT 05} trvá při 1\ensuremath{\times} přibližně 100 ms. Jeden cyklus tedy obsahuje 100 ms tónu a 100 ms ticha. \texttt{LOOP 08} po každém cyklu sníží C. Při hodnotách 3, 2 a 1 skočí zpět na GATE. Při nule pokračuje na HALT. Celkem naprogramuješ 800 ms.
+
+\note{Pokus: Pro osm pulzů změň bajt na adrese \texttt{07} z \texttt{04} na \texttt{08}. Chceš-li zdvojnásobit jen délku ticha, přepiš argument na \texttt{0F} hodnotou \texttt{0A} (10 \ensuremath{\times} 20 ms).}
+\clearpage
+\tagline{LEKCE 4  /  AUDIO}
+\titleline{Melodie s podmíněným koncem}
+Vytvoř čtyři stoupající tóny. Tentokrát bude registr A pamatovat výšku dalšího tónu a příznak Z rozhodne, kdy skončit. Mezi tóny zůstane brána otevřená.
+
+{\small\begin{tabularx}{\linewidth}{@{}rllllX@{}}\toprule
+\textbf{Adresa} & \textbf{Instrukce} & \textbf{HEX} & \textbf{BIN kód} & \textbf{BIN argument} & \textbf{}\\\midrule
+\texttt{00} & \texttt{WAVE 03} & \texttt{11 03} & \texttt{0001 0001} & \texttt{0000 0011} & \\
+\texttt{02} & \texttt{VOLUME 40} & \texttt{12 40} & \texttt{0001 0010} & \texttt{0100 0000} & \\
+\texttt{04} & \texttt{SET 18} & \texttt{40 18} & \texttt{0100 0000} & \texttt{0001 1000} & \\
+\texttt{06} & \texttt{FREQ\_A 00} & \texttt{1E 00} & \texttt{0001 1110} & \texttt{0000 0000} & \\
+\texttt{08} & \texttt{AWAIT 08} & \texttt{20 08} & \texttt{0010 0000} & \texttt{0000 1000} & \\
+\texttt{0A} & \texttt{ADD 04} & \texttt{41 04} & \texttt{0100 0001} & \texttt{0000 0100} & \\
+\texttt{0C} & \texttt{CMP 28} & \texttt{45 28} & \texttt{0100 0101} & \texttt{0010 1000} & \\
+\texttt{0E} & \texttt{JNZ 06} & \texttt{32 06} & \texttt{0011 0010} & \texttt{0000 0110} & \\
+\texttt{10} & \texttt{HALT} & \texttt{01 00} & \texttt{0000 0001} & \texttt{0000 0000} & \\
+\bottomrule\end{tabularx}}\par
+\sub{Sleduj registry při STEP}
+{\small\begin{tabularx}{\linewidth}{@{}llllX@{}}\toprule
+\textbf{A při FREQ\_A} & \textbf{Tón} & \textbf{A po ADD} & \textbf{Z po CMP} & \textbf{JNZ 06}\\\midrule
+\texttt{18} & 440 Hz & \texttt{1C} & 0 & skočí\\
+\texttt{1C} & 480 Hz & \texttt{20} & 0 & skočí\\
+\texttt{20} & 520 Hz & \texttt{24} & 0 & skočí\\
+\texttt{24} & 560 Hz & \texttt{28} & 1 & pokračuje na HALT\\
+\bottomrule\end{tabularx}}\par
+Po AWAIT se A zvětší o čtyři. CMP porovná novou hodnotu s 28 a uloží výsledek porovnání do Z. Proto poslední skutečně slyšitelný tón odpovídá 24. Každá výška trvá v AUTO při 1\ensuremath{\times} přibližně 160 ms. V režimu STEP přecházíš dál ručně.
+
+\note{Pokus: Přepiš argument CMP na \texttt{2C}. Přibude pátý tón o frekvenci 600 Hz. Pokud bys místo toho zadal \texttt{29}, smyčka by hodnoty nikdy nedosáhla: od \texttt{18} přičítá vždy čtyři a po \texttt{FC} přeteče na \texttt{00}.}
+\clearpage
+\tagline{REFERENCE  /  OBĚ BANKY}
+\titleline{Řízení programu a registry}
+PC je adresa příští instrukce. Po načtení dvojice bajtů postoupí o dvě, provedený skok mu přiřadí novou adresu. Po RUN začínáš s PC, A a C na nule a Z = 1. V tabulkách značí p jeden osmibitový argument, cíl je sudá adresa 00--FE. U ignorovaného argumentu zapisuj 00.
+
+{\small\begin{tabularx}{\linewidth}{@{}llllX@{}}\toprule
+\textbf{HEX} & \textbf{BIN} & \textbf{Instrukce} & \textbf{Argument} & \textbf{Co provede}\\\midrule
+\texttt{00} & \texttt{0000 0000} & \texttt{NOP} & \texttt{00} & Prázdný krok.\\
+\texttt{01} & \texttt{0000 0001} & \texttt{HALT} & \texttt{00} & Zastaví běh. Zvuk utichne, poslední obraz zůstane.\\
+\texttt{02} & \texttt{0000 0010} & \texttt{RESET} & \texttt{00} & Obnoví výchozí parametry aktivního generátoru. A, C a PC zachovává.\\
+\texttt{30} & \texttt{0011 0000} & \texttt{JMP} & \texttt{cíl} & Vždy skočí na cíl.\\
+\texttt{31} & \texttt{0011 0001} & \texttt{JZ} & \texttt{cíl} & Skočí při Z = 1.\\
+\texttt{32} & \texttt{0011 0010} & \texttt{JNZ} & \texttt{cíl} & Skočí při Z = 0.\\
+\texttt{33} & \texttt{0011 0011} & \texttt{COUNT} & \texttt{01--FF} & Nastaví C na počet opakování.\\
+\texttt{34} & \texttt{0011 0100} & \texttt{LOOP} & \texttt{cíl} & Sníží C o 1. Pokud zbývá alespoň 1, skočí.\\
+\texttt{40} & \texttt{0100 0000} & \texttt{SET} & \texttt{p} & Uloží p do registru A.\\
+\texttt{41} & \texttt{0100 0001} & \texttt{ADD} & \texttt{p} & Přičte p k A, výsledek zůstane v A.\\
+\texttt{42} & \texttt{0100 0010} & \texttt{SUB} & \texttt{p} & Odečte p od A, výsledek zůstane v A.\\
+\texttt{43} & \texttt{0100 0011} & \texttt{XOR} & \texttt{p} & Překlopí v A bity vybrané jedničkami v p.\\
+\texttt{44} & \texttt{0100 0100} & \texttt{RAND} & \texttt{p} & Uloží do A pseudonáhodné celé číslo od 0 do p včetně.\\
+\texttt{45} & \texttt{0100 0101} & \texttt{CMP} & \texttt{p} & Nastaví Z na 1 při rovnosti A a p, jinak na 0. Zachová A.\\
+\texttt{46} & \texttt{0100 0110} & \texttt{AND} & \texttt{p} & V A ponechá jen bity, které mají jedničku i v p.\\
+\texttt{47} & \texttt{0100 0111} & \texttt{OR} & \texttt{p} & V A nastaví na 1 všechny bity vybrané jedničkami v p.\\
+\bottomrule\end{tabularx}}\par
+SET, ADD, SUB, XOR, RAND, AND a OR nastaví Z podle výsledného A (nula dává Z = 1). Aritmetika přetéká po 256. COUNT a LOOP používají jediné C; uvnitř počítané smyčky by další COUNT přepsal počet zbývajících průchodů.
+
+\note{Bitová maska: po \texttt{SET A5} a \texttt{AND 0F} zůstane \texttt{05}. V binárním tvaru ponechává maska \texttt{0000 1111} pouze čtyři pravé bity.}
+\clearpage
+\tagline{REFERENCE  /  VIDEO}
+\titleline{Obrazový generátor}
+{\small\begin{tabularx}{\linewidth}{@{}llllX@{}}\toprule
+\textbf{HEX} & \textbf{BIN} & \textbf{Instrukce} & \textbf{Argument} & \textbf{Co provede}\\\midrule
+\texttt{50} & \texttt{0101 0000} & \texttt{PATTERN} & \texttt{00--08} & Vybere vzor ze seznamu níže.\\
+\texttt{51} & \texttt{0101 0001} & \texttt{MOTION} & \texttt{p} & Znaménková hodnota p / 16 v pixelech za snímek při rychlosti 1\ensuremath{\times}.\\
+\texttt{52} & \texttt{0101 0010} & \texttt{DENSITY} & \texttt{p} & Hustota vzoru. Pro pruhy při SCALE 00 odpovídá alespoň jedné periodě, jinak 4 \ensuremath{\times} p periodám přes rastr.\\
+\texttt{53} & \texttt{0101 0011} & \texttt{LEVEL} & \texttt{p} & Jas světlých bodů od 0 do 255.\\
+\texttt{54} & \texttt{0101 0100} & \texttt{SCALE} & \texttt{p} & Měřítko 1--8. Zvýší se o jeden stupeň na každých 32 jednotek argumentu.\\
+\texttt{55} & \texttt{0101 0101} & \texttt{GLITCH} & \texttt{xy} & Horní čtveřice x určí sílu, dolní y pravděpodobnost zásahu y/16 za snímek.\\
+\texttt{56} & \texttt{0101 0110} & \texttt{INVERT} & \texttt{p} & 00 vypne inverzi. Každá nenulová hodnota ji zapne.\\
+\texttt{57} & \texttt{0101 0111} & \texttt{SHIFT} & \texttt{p} & Vodorovný posun souřadnice vzoru o znaménkovou hodnotu p v pixelech.\\
+\texttt{58} & \texttt{0101 1000} & \texttt{FEEDBACK} & \texttt{p} & Do obrazu přimíchá podíl p/255 z předchozího snímku. FF podrží předchozí obraz.\\
+\texttt{59} & \texttt{0101 1001} & \texttt{SEED} & \texttt{p} & Nastaví výchozí stav pro obrazovou náhodu a příkaz RAND.\\
+\texttt{5E} & \texttt{0101 1110} & \texttt{DENS\_A} & \texttt{00} & Převezme hustotu z registru A.\\
+\texttt{5F} & \texttt{0101 1111} & \texttt{GLITCH\_A} & \texttt{00} & Převezme obě čtveřice pro glitch z registru A.\\
+\texttt{60} & \texttt{0110 0000} & \texttt{VWAIT} & \texttt{p} & Čeká p obrazových intervalů. Při 1\ensuremath{\times} jeden trvá 40 ms.\\
+\texttt{70} & \texttt{0111 0000} & \texttt{VJMP} & \texttt{cíl} & Skok dostupný v bance VIDEO, stejný účinek jako JMP.\\
+\bottomrule\end{tabularx}}\par
+\sub{Argument PATTERN}
+{\small\begin{tabularx}{\linewidth}{@{}lllX@{}}\toprule
+\textbf{HEX} & \textbf{BIN} & \textbf{Vzor} & \textbf{}\\\midrule
+\texttt{00} & \texttt{0000 0000} & Černá plocha & \\
+\texttt{01} & \texttt{0000 0001} & Binární náhodný šum & \\
+\texttt{02} & \texttt{0000 0010} & Vodorovné pruhy & \\
+\texttt{03} & \texttt{0000 0011} & Svislé pruhy & \\
+\texttt{04} & \texttt{0000 0100} & Šachovnice & \\
+\texttt{05} & \texttt{0000 0101} & Pseudonáhodné bloky & \\
+\texttt{06} & \texttt{0000 0110} & Bitové XOR souřadnic & \\
+\texttt{07} & \texttt{0000 0111} & Generovaná bitmapa (bez čtení programové RAM) & \\
+\texttt{08} & \texttt{0000 1000} & Diagonální pruhy & \\
+\bottomrule\end{tabularx}}\par
+Znaménkový bajt: 00--7F znamená 0 až +127. U 80--FF odečti od běžné číselné hodnoty 256. FC tedy znamená 252 \ensuremath{-} 256 = \ensuremath{-}4.
+
+\clearpage
+\tagline{REFERENCE  /  AUDIO}
+\titleline{Jednohlasý syntezátor}
+{\small\begin{tabularx}{\linewidth}{@{}llllX@{}}\toprule
+\textbf{HEX} & \textbf{BIN} & \textbf{Instrukce} & \textbf{Argument} & \textbf{Co provede}\\\midrule
+\texttt{10} & \texttt{0001 0000} & \texttt{FREQ} & \texttt{p} & Výška oscilátoru v Hz = 200 + 10 \ensuremath{\times} p (200--2750 Hz).\\
+\texttt{11} & \texttt{0001 0001} & \texttt{WAVE} & \texttt{00--05} & Vybere průběh ze seznamu níže.\\
+\texttt{12} & \texttt{0001 0010} & \texttt{VOLUME} & \texttt{p} & Hlasitost p/255. Při startu je nulová.\\
+\texttt{13} & \texttt{0001 0011} & \texttt{ATTACK} & \texttt{p} & Doba náběhu po otevření brány, p \ensuremath{\times} 4 ms.\\
+\texttt{14} & \texttt{0001 0100} & \texttt{DECAY} & \texttt{p} & Doba odeznění po zavření brány, p \ensuremath{\times} 4 ms.\\
+\texttt{15} & \texttt{0001 0101} & \texttt{GATE} & \texttt{00 / 01} & 00 zavře bránu, 01 ji otevře.\\
+\texttt{16} & \texttt{0001 0110} & \texttt{PULSE} & \texttt{p} & Střída pulzního průběhu p/255, omezená na 1--99 procent.\\
+\texttt{17} & \texttt{0001 0111} & \texttt{CRUSH} & \texttt{p} & 01--07 nastaví hloubku 1--7 bitů. Při 00 nebo 08--FF se redukce vypne.\\
+\texttt{18} & \texttt{0001 1000} & \texttt{NOISE} & \texttt{p} & Podíl bílého šumu v signálu, p/255.\\
+\texttt{19} & \texttt{0001 1001} & \texttt{LFO\_RATE} & \texttt{p} & 00 vypne běh modulátoru. Jinak rychlost v Hz = 0,1 + 0,05 \ensuremath{\times} (p \ensuremath{-} 1).\\
+\texttt{1A} & \texttt{0001 1010} & \texttt{LFO\_DEPTH} & \texttt{p} & Relativní hloubka frekvenční modulace p/255.\\
+\texttt{1B} & \texttt{0001 1011} & \texttt{FILTER} & \texttt{p} & Mezní frekvence dolní propusti v Hz = 100 + 5900 \ensuremath{\times} p/255.\\
+\texttt{1E} & \texttt{0001 1110} & \texttt{FREQ\_A} & \texttt{00} & Nastaví výšku z A podle stejného vztahu jako FREQ.\\
+\texttt{1F} & \texttt{0001 1111} & \texttt{VOL\_A} & \texttt{00} & Nastaví hlasitost na A/255.\\
+\texttt{20} & \texttt{0010 0000} & \texttt{AWAIT} & \texttt{p} & Čeká p zvukových intervalů. Při 1\ensuremath{\times} jeden trvá 20 ms.\\
+\bottomrule\end{tabularx}}\par
+\sub{Argument WAVE}
+{\small\begin{tabularx}{\linewidth}{@{}lllX@{}}\toprule
+\textbf{HEX} & \textbf{BIN} & \textbf{Průběh} & \textbf{}\\\midrule
+\texttt{00} & \texttt{0000 0000} & Sinus & \\
+\texttt{01} & \texttt{0000 0001} & Pila & \\
+\texttt{02} & \texttt{0000 0010} & Obdélník se střídou 50 procent & \\
+\texttt{03} & \texttt{0000 0011} & Trojúhelník & \\
+\texttt{04} & \texttt{0000 0100} & Bílý šum & \\
+\texttt{05} & \texttt{0000 0101} & Pulz se střídou podle PULSE & \\
+\bottomrule\end{tabularx}}\par
+Pro 440 Hz vychází p = (440 \ensuremath{-} 200) / 10 = 24, tedy HEX 18. Krok mezi sousedními hodnotami FREQ je vždy 10 Hz. Na této stupnici proto lze některé hudební výšky zadat jen přibližně.
+
+\clearpage
+\tagline{PRACOVNÍ POSTUP}
+\titleline{Emulátor, tempo a ladění}
+\sub{Jak dostat výpis do emulátoru}
+Otevři \texttt{bitbox-emulator.html}, zvol STOP a banku. Do editoru opiš sloupec Instrukce. Stejně fungují samotné dvojice HEX nebo adresovaný řádek jako \texttt{04: 01 00}. Stiskni ASSEMBLE \ensuremath{\rightarrow} RAM a pak RUN. Překlad přepíše celou aktivní banku a neobsazené bajty vyplní nulami. Před úpravou si původní banku můžeš uchovat přes EXPORT .BIN (256 bajtů); k obnovení slouží IMPORT .BIN.
+
+Číselné literály jsou běžně v HEX. \texttt{10}, \texttt{0x10}, \texttt{\%00010000} a \texttt{0d16} značí stejný bajt. \texttt{ORG 40} nastaví adresu zápisu, \texttt{DB 12 AB} vloží dva bajty. Návěští jako \texttt{ZMEN:} se smí použít i před svou definicí jako cíl skoku. Komentář začíná středníkem.
+
+\sub{Tři různé rychlosti}
+V emulátoru je SPEED násobič 0,25\ensuremath{\times} až 4\ensuremath{\times}. Při 2\ensuremath{\times} trvá \texttt{AWAIT 05} asi 50 ms a posun obrazu se zrychlí. Výška zadaná přes FREQ zůstává stejná. V režimu STEP každý NEXT provede právě jednu instrukci a přeskočí zbývající čekání.
+
+Pro fyzický panel jsme navrhli SPEED v IPS: 1, 10, 100 a 1000 instrukcí za sekundu. Hodnota 10 IPS znamená cílový krok po 100 ms. Přesný souběh krokovacího intervalu s WAIT určí firmware. Časy v lekcích platí pro emulátor při 1\ensuremath{\times}. Takt procesoru ESP32 se do výpočtu výšky tónu ani délky WAIT nezadává.
+
+\sub{Když výsledek nesedí}
+{\small\begin{tabularx}{\linewidth}{@{}p{42mm}X@{}}\toprule
+\textbf{Příznak} & \textbf{Co ověřit}\\\midrule
+Zvuk je tichý & Zvol AUDIO, zapni zvuk v prohlížeči a zkontroluj VOLUME i GATE. Za příkaz pro tón vlož AWAIT, aby jej HALT hned neukončil.\\
+WATCHDOG v AUTO & Emulátor zastaví běh po 64 instrukcích bez kladné pauzy v jednom výpočetním cyklu. Do opakované části vlož AWAIT nebo VWAIT s nenulovým argumentem.\\
+Chyba adresy či kódu & Ověř, že skok míří na sudou adresu, že po FE následuje skok nebo HALT a že jsi zapsal i argument. Zkontroluj také správnou banku.\\
+LED vypadají opožděně & LIVE v AUTO ukazuje jeden záznam za 100 ms. Při rychlém běhu může část historie vypadnout. Pro jednotlivé instrukce použij STEP + LIVE.\\
+\bottomrule\end{tabularx}}\par
+{\small Podklady: \texttt{bitbox-basic-1.0.md}, referenční HTML emulátor 1.0 a návrh ovládání panelu 1.1. Čtyři výukové výpisy byly přeloženy a krokovány kódem emulátoru.}
+
+\clearpage
+\tagline{HARDWARE  /  ZADNÍ PANEL}
+\titleline{Periferní port GX12-3}
+Na zadní panel osaď jeden třípólový konektor GX12-3 s popiskem \texttt{PERIPHERAL}. Spojení používá obousměrný UART s logickými úrovněmi 3,3~V. Pro krátký kabel k jedné periferii potřebuješ tři vodiče. Periferie má vlastní napájení.
+
+\sub{Zapojení panelového dílu a kabelu}
+{\small\begin{tabularx}{\linewidth}{@{}lllX@{}}\toprule
+\textbf{Kontakt} & \textbf{BITBOX} & \textbf{Vývod ESP32} & \textbf{Na straně periferie}\\\midrule
+1 & GND & GND & Společná signálová zem\\
+2 & TX & GPIO27 & RX periferie (přijímá z BITBOXu)\\
+3 & RX & GPIO32 & TX periferie (vysílá do BITBOXu)\\\bottomrule
+\end{tabularx}}\par
+Čísla platí pro tento projekt. Pájej podle číslic u kontaktů. Pohled na pájecí vývody a pohled na čelo konektoru jsou zrcadlové. Před připojením elektroniky do sebe oba díly zasuň a ohmmetrem ověř, na který vodič kabelu vede každý očíslovaný kontakt.
+
+\note{Pin 3 přijímá logiku 3,3~V. Pokud čtečka používá klasické 5V Arduino Nano, přizpůsob úroveň jeho TX na 3,3~V před vstupem do BITBOXu. Konektor nepřenáší napájecí napětí.}
+
+\sub{Jak port využijí obě periferie}
+\textbf{Čtečka děrných štítků.} Čtečka sestaví bajt z osmi datových stop a odešle ho ze svého TX na pin 3. U jednoduchého jednosměrného prototypu stačí zapojit kontakty 1 a 3.
+
+\textbf{Magnetofonový adaptér.} Při ukládání tečou bajty z BITBOXu pinem 2 do adaptéru, který z nich vytvoří zvukový signál pro záznam. Při načítání adaptér dekóduje signál z pásku a vrací bajty pinem 3. Zvukové konektory magnetofonu patří na adaptér.
+
+\sub{První zkouška po doplnění firmwaru}
+Přístup k portu zajistí samostatný UART nastavený na RX = GPIO32 a TX = GPIO27. Pro smyčkový test použij prázdný kabelový protikus s propojenými kontakty 2 a 3. Po odeslání bajtů \texttt{55 AA 00 FF} má UART přijmout stejnou čtveřici ve stejném pořadí. Tento test ověří obě datové cesty až k zadnímu panelu.
+
+Přenos programu je plánovaná funkce editoru. Formát zpráv, přenosová rychlost a ovládání uložení či načtení budou součástí firmwaru periferií a BITBOXu.
+\end{document}
