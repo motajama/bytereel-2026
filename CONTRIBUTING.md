@@ -37,7 +37,7 @@ connector view, and any dimensions that are not verified on the physical unit.
 
 ## Licensing
 
-Contributions are submitted under the license assigned to the changed files:
-MIT for original software, CERN-OHL-S-2.0 for hardware design source, and CC
-BY 4.0 for project documentation. Preserve all third-party notices. See
-`LICENSES/README.md`.
+Contributions to original software are offered under GNU GPL version 3 or (at
+your option) any later version. Hardware design source uses CERN-OHL-S-2.0,
+and project documentation uses CC BY 4.0. Preserve all third-party notices.
+See `LICENSES/README.md`.

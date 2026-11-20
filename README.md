@@ -61,8 +61,8 @@ the test report. Rebuild with the pinned toolchain before making a new release.
 
 ## Licensing
 
-- Original software, firmware, assembler, tests, and sample programs: MIT; see
-  [`LICENSE`](LICENSE).
+- Original byteREEL software, firmware, assembler, tests, and sample programs:
+  GNU GPL version 3 or (at your option) any later version; see [`LICENSE`](LICENSE).
 - Hardware design files and hardware documentation: CERN-OHL-S-2.0; see
   [`LICENSES/CERN-OHL-S-2.0.txt`](LICENSES/CERN-OHL-S-2.0.txt) and the scope
   notes in [`LICENSES/README.md`](LICENSES/README.md).
@@ -70,7 +70,10 @@ the test report. Rebuild with the pinned toolchain before making a new release.
   [`LICENSES/README.md`](LICENSES/README.md).
 - Bundled composite-video library files retain their upstream MIT notices.
   Third-party and historical reference files are identified separately and
-  are not relicensed by the project-wide license declarations.
+  are not relicensed by the project-wide license declarations. GPL is a
+  copyleft license: distributing a covered modified version requires the
+  corresponding source under GPL-compatible terms. It does not prohibit
+  commercial use or private use.
 
 ## Contributions
 
