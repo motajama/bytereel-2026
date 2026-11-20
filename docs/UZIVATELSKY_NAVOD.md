@@ -48,16 +48,26 @@ address from the switches. Release EXAM between actions. HOME selects address
 0 and NEXT advances to the next address.
 
 In MEMORY, use exactly one data switch to select a slot: D0 selects slot 1,
-through D7 for slot 8. Hold MEMORY + EXP/EXAM for two seconds to save both
-working banks. Hold MEMORY + NEXT for two seconds to load both banks. Slot
-changes during a hold cancel that gesture; release the operation paddle after
-it completes. An empty selection or an unavailable/corrupt filesystem is
-reported without changing RAM or the saved slot.
+through D7 for slot 8. The upper LEDs show the selection; the lower LEDs blink
+only for slots with a valid saved record. Hold MEMORY + EXP/EXAM for two
+seconds to save both working banks. Hold MEMORY + NEXT for two seconds to
+load both banks. Slot changes during a hold cancel that gesture; release the
+operation paddle after it completes. A successful load resets PC and editor
+address to 00 and leaves the VM stopped. Invalid selection or an
+unavailable/corrupt filesystem is reported without changing RAM or the saved
+slot.
+
+In MEMORY + STOP, a short WRITE loads the built-in demo for the active AUDIO
+or VIDEO mode into that mode's working bank only. It preserves the other bank
+and saved slots, resets VM state and outputs, and does not start execution.
+WRITE+ does not load a demo. The AUDIO demo plays a repeating three-level
+melody through the audio output; the VIDEO demo cycles through three patterns.
 
 Panel expander stays on the verified 10 kHz I2C bus. In EDIT preview, active
 DATA bits blink together at 1000 ms on / 1000 ms off while the address remains
-steady. In MEMORY, the selected address mask and all DATA LEDs blink together
-at the same rate. Normal EDIT display stays steady. User operation errors
+steady. In MEMORY, the selected slot mask is shown above and the valid-slot
+occupancy mask blinks below at 1000 ms on / 1000 ms off. Normal EDIT display
+stays steady. User operation errors
 flash all LEDs three times at 100 ms on / 100 ms off, then restore the panel
 display. These patterns are scheduled without blocking delays and redundant
 I2C writes are skipped.
@@ -88,6 +98,15 @@ the input expander at `0x22` read-only. Do not connect RS-232 or 5 V to the
    test bytes `00` and `FF` at 9600 baud.
 4. **Audio:** Connect GPIO26 audio RCA to a line input at low volume. Test
    frequency, waveform, volume, gate, filter, and STOP mute.
+   For a steady-tone diagnostic, assemble `examples/audio-440-diagnostic.asm`
+   into an AUDIO slot in MEMORY, hold MEMORY + NEXT for two seconds while
+   stopped, then switch to EDIT + AUDIO and perform a physical STOP-to-RUN.
+   It loops a 440 Hz sine at VOLUME 40, 80 and C0 for 2.5 seconds each without
+   gate retriggers. Record continuous crackle separately from the clicks at
+   level changes. In MEMORY, the VM is stopped by design, so the same tone
+   cannot run while Wi-Fi is active. Check the cumulative audio write counters
+   in status after each phase; `audioDmaUnderruns` is deliberately null because
+   the firmware does not read a hardware DMA-underrun event.
 5. **PAL:** Connect GPIO25 composite video to a PAL-capable input. Check
    synchronization, color, frame margins, FEEDBACK, hold on STOP, and mode
    changes without an MCU restart.

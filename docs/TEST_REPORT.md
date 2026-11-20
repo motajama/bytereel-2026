@@ -226,3 +226,210 @@ user data.
 - Physical LittleFS scan/initialization, panel LED orientation, SAVE/LOAD, web
   delete, and AV behavior remain **NOT TESTED** on the device. Host tests cover
   shared state and storage algorithms, not ESP flash I/O or physical LEDs.
+
+## AV, slot upload, and built-in demos candidate (2026-11-20)
+
+- Host suite: **PASS** (`sh host-tests/run.sh`). Added real helper coverage for
+  top-level JSON field scoping against escaped assembler text, nested bank
+  objects and UTF-16 escapes; demo array/binary equality and execution through
+  the ISA VM; audio DAC word range/alignment and block-boundary continuity;
+  slot occupancy, demo-bank isolation and the existing storage/revision fault
+  tests. The browser test uses the checked-in frontend and shared route/JSON
+  helper contracts, but does not instantiate Arduino `WebServer` callbacks.
+- ESP32 build: **PASS**, Arduino ESP32 core 2.0.14. Generated partition table
+  was decoded and matches the checked-in layout: app0 `0x10000/0x300000`,
+  LittleFS `0x310000/0x0E0000`, coredump `0x3F0000/0x10000`. Compiler reports
+  972,373 B application and 107,312 B global variables. This link-time figure
+  is not proof of runtime heap headroom.
+- Image: `firmware/build/bytereel_2026.ino.bin`, 978,672 B,
+  SHA-256 `3d0a8c6b3b52bc7e2309bacab69954ec948a31a616cadb39b0a42d3bb9719f34`.
+- Video source diagnosis: the app previously reduced every `begin()` failure
+  to `VIDEO_BACKEND_ERROR`; the composite library exposed neither a stage nor
+  its `esp_err_t`. It now reports PAL/framebuffer/DMA/interrupt/I2S phase and
+  result, plus heap and DMA-block values; failed setup frees partial buffers
+  and interrupt resources. The old slot commit path also stopped and restarted
+  PAL around LittleFS and ignored `begin()` failure. That unnecessary pause is
+  removed. The exact reason for the user's observed first `PATTERN` failure is
+  not provable from the supplied log; a device capture after this image is
+  needed to identify its stage/code.
+- Slot upload parsing now resolves top-level fields and nested slot/bank
+  objects instead of searching the first matching key anywhere in the body.
+  Thus quoted assembler text containing words like `slot` or `video` cannot
+  redirect validation. Field-specific format/revision errors remain enforced.
+- Audio host checks confirm the renderer emits centered, in-range, correctly
+  aligned DAC samples and does not discontinuously reset its sine phase at a
+  128-sample boundary. The audio task now completes partial I2S writes within a
+  bounded block deadline and exposes maximum write duration/underrun counters.
+  This does not establish whether the reported physical crackle is fixed.
+- MEMORY lower-row LED mask now comes from validated slot records, including
+  valid zero-byte-content records; corrupt/read-error slots remain in a
+  separate mask and are not silently classified as empty. Demo binaries are
+  generated from the checked-in assembler sources and checked against the
+  firmware arrays on every build. The audio demo cycles VOLUME 40/80/C0; the
+  video demo cycles patterns 3/4/6. Short WRITE in MEMORY+STOP replaces only
+  the active work bank; it does not save, load, or run a user slot/program.
+- Physical PAL output, repeated AUDIO/VIDEO switching, LittleFS save/load,
+  Wi-Fi stability under load, LED occupancy, and acoustic crackle are **NOT
+  TESTED** on the device. No firmware upload was performed for this candidate.
+
+## Slot 2 source mismatch and audio transport candidate (2026-11-20)
+
+- Source-level slot cause: opening a slot launched an asynchronous GET whose
+  response unconditionally wrote into global editor fields. An older response
+  could replace a newer selection. SAVE also held slot/revision/source partly
+  in globals while asynchronous assembly updated the live HEX fields; changing
+  selection during assembly could pair one slot's source with another editor's
+  bytes. The checked-in frontend test injects both delayed GET and delayed
+  assembly responses and verifies they cannot overwrite or save against the
+  newly selected editor. SAVE now snapshots slot, revision, both banks and
+  metadata, checks an editor generation token after each await, and sends a
+  slot-specific immutable body.
+- Assembler input edits are assembled before SAVE and the returned 256-byte
+  bank is the exact bank in the payload. Direct HEX edits retain the user's
+  source text with `sourceMatches:false` and unknown length rather than silently
+  dropping it or claiming it matches. Panel-generated banks preserve existing
+  source strings as stale metadata too. Null source remains supported for
+  source-less banks. The server still validates current sources strictly and
+  now reports slot, bank, first differing address, expected byte and supplied
+  byte. A host test passes the frontend's real request body through the C++ ISA
+  assembler and the same source/bytecode comparison helper used by the handler.
+- The integration sequence covers saved slot 1 followed by empty slot 2,
+  first and repeated slot 2 saves, reopening, exact padded HEX/source match,
+  panel bank publication, HEX change, stale source retention, and all route
+  indices 0–7. The test uses the actual frontend JavaScript, C++ assembler,
+  production JSON scanner/source checker, and bank publication helper. It is
+  an HTTP adapter test, not an invocation of Arduino `WebServer` callbacks or
+  LittleFS on the ESP32.
+- Panel `SLOT_SELECT` logs now label zero mask as `NONE`; selection changes
+  alone do not flash the error animation. Invalid masks are still rejected
+  and signaled only when panel SAVE/LOAD is attempted. Web slot routes remain
+  independent of the panel selector.
+- Audio source review found that a partially written block was abandoned when
+  an I2S call returned an error/timeout, while the synthesizer had already
+  advanced its phase by 128 samples. The audio task now keeps a write cursor and
+  retries only the unsent suffix, so it does not silently skip that remainder.
+  Oscillator/envelope/filter controls are snapshotted once per block so VM
+  parameter changes cannot alter a block halfway through. Low-cost status
+  counters report actual bytes, partial I2S calls, API timeouts, software
+  deadline expirations, incomplete block attempts, completed blocks, maximum
+  write/fill durations and block periods. `audioDmaUnderruns` is `null` because
+  this code does not subscribe to a hardware DMA-underrun event; it is not
+  inferred from failed writes.
+- Audio host tests inject partial writes and timeout/retry sequences through
+  the production cursor/stats helpers, and execute
+  `examples/audio-440-diagnostic.asm` through the ISA VM to confirm fixed 440 Hz
+  sine, fixed gate/phase, 40/80/C0 levels and repetition. This does not measure
+  actual I2S/DAC timing or audible crackle.
+- Wi-Fi runs only in MEMORY while VM RUN is accepted only in EDIT. Therefore
+  the current control model cannot play the diagnostic tone concurrently with
+  Wi-Fi. Status counters can be compared for audio silence/write scheduling
+  under MEMORY/Wi-Fi load versus tone blocks in EDIT, but that is not an
+  equivalent acoustic A/B. A simultaneous tone-under-Wi-Fi test would require
+  a separately authorized diagnostic playback path or a change to that mode
+  boundary; neither is hidden in this candidate.
+- ESP32 build: **PASS**, core 2.0.14 and the same partition table. Runtime
+  audio transport, slot 2 persistence and panel LOAD are still **NOT TESTED**
+  on hardware. No upload, flash read, format or slot deletion was performed.
+- Final build report: **979,121 B** application text/data, **107,352 B** global
+  variables; generated Huge APP partition was decoded and matches the existing
+  layout (`app0 0x10000/0x300000`, `spiffs 0x310000/0x0E0000`, coredump
+  `0x3F0000/0x10000`). Artifact `firmware/build/bytereel_2026.ino.bin` is
+  **985,424 B**, SHA-256
+  `292a31025f525c64010bb7001c71531b061a5109b112665775f8ec76b1549410`.
+- Generated diagnostic image `examples/audio-440-diagnostic.bin` is 256 B,
+  SHA-256 `765e9498ef5785220765951d7b1860c2e48c46f6524a23517fc6c2dcad023268`.
+
+## Web request tracing and audio path diagnostic (2026-11-20)
+
+- Confirmed frontend defects: opening an editor also launched a redundant,
+  unawaited slot-list fetch alongside the slot GET; the editor UI embedded
+  `ui-2026.11.20-r1` while firmware status advertised `r2`; and a manual HEX
+  edit did not clear `sourceEdited`, so a subsequent SAVE could reassemble old
+  source and replace the user's HEX edit. The UI now uses `r2`, allows at most
+  one slot-list request, does not refresh the list on editor open, blocks slot
+  switching while a SAVE is in flight, and makes direct HEX edits explicitly
+  source-stale while preserving the source text.
+- SAVE uses a longer operation-specific deadline and never blindly retries.
+  If the response times out, the page GETs the selected slot and compares both
+  complete banks, sources, lengths and revision-bearing record before it says
+  the commit succeeded. A mismatch or failed verification is reported as
+  unknown/not committed; the user can reload manually. Status and log polling
+  pause during SAVE to keep the synchronous `WebServer` queue clear. Each
+  request carries a UI client ID; handled requests return
+  `X-byteREEL-Request-Id` and the same ID in error JSON. Firmware records method,
+  path, Content-Length, phase, handler duration and HTTP status for mutations,
+  assembler/list requests, errors and slow polls. Routine fast status/log polls
+  are omitted from the ring to avoid displacing user events.
+- The WebServer callback starts only after its HTTP parser has received and
+  parsed the request body. A timeout before callback entry therefore cannot
+  have a firmware request ID or phase log; its UI client ID is still shown. The
+  existing device did not provide the timed-out request's client ID/log, so the
+  exact physical timeout point remains **NOT PROVEN**. A new device trace can
+  distinguish a handled slow operation from a request that never reached a
+  callback, but cannot identify a pre-callback Wi-Fi/TCP cause from firmware
+  logs alone.
+- The frontend regression now runs the exact production JavaScript request
+  body through the production JSON scanner and source/bytecode validation
+  helper now called by the real `apiPutSlot` handler. The slot 2 reproduction
+  `PFREQ 18 / PDUR 00 / PPLAY 00 / JMP 06` assembles to
+  `80 18 81 00 82 00 30 06`, with a 256-byte HEX bank, sourceMatches=true,
+  route index 1, expectedRevision 0 and a source-less empty VIDEO bank. The
+  test validates the first empty save, reopen/readback, panel bank publication,
+  direct HEX change with stale-source retention, syntax rejection with line,
+  mismatch address/expected/supplied bytes, slot indices 1–8, and SAVE race
+  protection. This is a host HTTP adapter: it uses the actual frontend and
+  production body/record parser and validator, but does not call Arduino's
+  `WebServer` callback or persist to ESP32 LittleFS. The stated PFREQ sequence
+  passes this path; the historical device-side refusal has no captured request
+  body/requestId, so its exact original trigger is not proven.
+- Audio source/configuration calculation: I2S is configured for 22,050 Hz,
+  16-bit, `ONLY_RIGHT`, `dma_buf_len=128`, `dma_buf_count=8`. Under the
+  configured mono interpretation, one 128-sample producer block represents
+  5.805 ms and eight descriptors represent about 46.44 ms (2,048 bytes) of
+  queue capacity. Producer writes have a 10 ms software deadline and preserve
+  partial-write cursors. Current status reports actual API bytes, partial
+  calls, timeouts, write duration, block fill/period and missed software
+  deadlines; `audioDmaUnderruns` remains `null` because hardware DMA underruns
+  are not observed by this driver. The device has not supplied these counters,
+  so no producer-vs-DMA timing result or cause of the audible crackle is
+  claimed.
+- Added a build-flag-only direct-output diagnostic: a precomputed 2,205-sample
+  period contains exactly 44 cycles at 440 Hz/22,050 Hz, is emitted through the
+  same I2S built-in DAC path at a fixed mild amplitude, and does not call VM,
+  synth, envelope or filter code. RUN after the normal STOP interlock enables
+  it; physical STOP disables the DAC after the current bounded I2S write
+  returns (at most its 10 ms API timeout) and clears the tone gate. It is
+  intended to compare EDIT (Wi-Fi off) and MEMORY (Wi-Fi on), then compare the
+  diagnostic sine to the production synth. Host checks prove table range and
+  periodic boundary continuity only, not real DAC timing or audible quality.
+- `sh host-tests/run.sh`: **PASS**, including the frontend → assembler → actual
+  production request/record validation helper path and focused audio table and
+  partial-write tests. This does not represent a real HTTP/TCP/LittleFS test.
+- Standard firmware build: **PASS**, ESP32 core 2.0.14; 985,453 B application,
+  107,528 B static globals, 3,145,728 B app partition limit. Image
+  `firmware/build/bytereel_2026.ino.bin`, SHA-256
+  `9d6a4ed276e8528c21b71616246dbd396e67366f900b10566631eb4df4683c51`.
+- Diagnostic build: **PASS**, same core and partition table; 983,733 B
+  application, 111,944 B static globals. Image
+  `firmware/build/audio-diagnostic/bytereel_2026.ino.bin`, SHA-256
+  `19c833e660cbb4f0f58a9e9695dcfe2cd4dd07d45cb715811a607d27aa3d881d`.
+  Both generated partition tables compare byte-for-byte and decode to the
+  existing app0 `0x10000/0x300000`, SPIFFS `0x310000/0x0E0000`, and coredump
+  `0x3F0000/0x10000` layout. No firmware was uploaded and no user data was
+  accessed.
+- The patch does not alter video backend code, panel SAVE/LOAD logic, speed,
+  I2C setup, ISA, LED mapping, partition, or Wi-Fi mode policy. Video and panel
+  SAVE/LOAD were physically working in the user's last report; this software
+  candidate preserves those paths, but no new physical regression test was
+  performed. Wi-Fi stability, device HTTP latency, LittleFS web commit, and
+  acoustic crackle remain **NOT TESTED** on hardware.
+- Targeted physical test after controlled upload: in AUDIO, leave device STOP
+  for silence; switch STOP→RUN to hear the fixed diagnostic sine, then STOP to
+  confirm immediate DAC mute. Compare short periods in EDIT (AP off) and
+  MEMORY (AP on) while watching `audioWriteCalls`, `audioPartialWrites`,
+  `audioWriteTimeouts`, `audioBlockDeadlineExpirations`, `audioMaxWriteUs`,
+  `audioMaxBlockPeriodUs`, free heap and largest DMA block. Return to the
+  standard firmware before testing normal VM audio; then test the same steady
+  440 Hz synth program. For web, save slot 2 and note UI version, client/server
+  request IDs and the single `WEB_REQUEST` phase/status line; do not repeat a
+  timed-out SAVE until its GET verification has completed.

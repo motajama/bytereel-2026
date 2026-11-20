@@ -1,0 +1,31 @@
+; byteREEL 2026 built-in VIDEO demo / ISA 2.0
+; Moving bars, checkerboard, then XOR with restrained glitch. Each section
+; clears feedback/glitch state before applying its own parameters.
+MAIN:
+FEEDBACK 00
+GLITCH 00
+INVERT 00
+LEVEL FF
+DENSITY 08
+MOTION 40
+PATTERN 03
+VWAIT 40
+MOTION C0
+VWAIT 40
+FEEDBACK 00
+GLITCH 00
+MOTION 00
+PATTERN 04
+DENSITY 08
+SCALE 20
+VWAIT 40
+FEEDBACK 00
+SEED 21
+DENSITY 20
+SCALE 04
+GLITCH 23
+PATTERN 06
+VWAIT 40
+GLITCH 00
+FEEDBACK 00
+JMP MAIN

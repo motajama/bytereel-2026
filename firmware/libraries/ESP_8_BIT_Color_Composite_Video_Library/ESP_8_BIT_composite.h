@@ -82,6 +82,8 @@ class ESP_8_BIT_composite
     // Stop DMA/IRQ and release peripherals while retaining CPU framebuffer ownership.
     void end();
     bool isStarted() const { return _started; }
+    esp_err_t startError() const;
+    const char *startStage() const;
 
     /*
      * @brief Wait for current frame to finish rendering

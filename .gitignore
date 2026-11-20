@@ -7,6 +7,10 @@
 # Reproducible build metadata; retain the flashable firmware images.
 /firmware/build/*.elf
 /firmware/build/*.map
+/firmware/build/**/*.elf
+/firmware/build/**/*.map
+/firmware/build/**/*.bootloader.bin
+/firmware/build/**/*.partitions.bin
 /firmware/build-littlefs-test/
 __pycache__/
 *.py[cod]

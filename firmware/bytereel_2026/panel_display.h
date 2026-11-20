@@ -18,6 +18,16 @@ static inline uint16_t br_panel_map_word(uint16_t logical) {
 static inline uint16_t br_panel_led_word(uint8_t address,uint8_t data) {
   return br_panel_map_word((uint16_t)(((uint16_t)address<<8)|data));
 }
+// MEMORY shows the physical one-hot selection above and the cached
+// occupancy bitmap below. Occupancy is a record state, never inferred from
+// the program bytes (a valid all-zero bank is still occupied).
+static inline uint16_t br_memory_display_word(uint8_t selection,uint8_t occupied,bool litPhase) {
+  return (uint16_t)(((uint16_t)selection<<8)|(litPhase?occupied:0));
+}
+static inline bool br_copy_demo_bank(uint8_t *destination,const uint8_t *program,size_t length) {
+  if(!destination||!program||length>256)return false;
+  memset(destination,0,256);memcpy(destination,program,length);return true;
+}
 static inline uint8_t br_edit_display_value(bool preview,uint8_t switches,uint8_t stored){return preview?switches:stored;}
 static inline void br_edit_store(uint8_t *bank,uint8_t &address,uint8_t value,bool advance){if(!bank)return;bank[address]=value;if(advance)++address;}
 static inline bool br_publish_banks(bool verified,const uint8_t *video,const uint8_t *audio,uint8_t *videoRam,uint8_t *audioRam){if(!verified||!video||!audio||!videoRam||!audioRam)return false;memcpy(videoRam,video,256);memcpy(audioRam,audio,256);return true;}

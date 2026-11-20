@@ -24,6 +24,8 @@ int main(){
   p.examPress(0x2a,address);assert(address==0x2a); // separate press selects address
   address=7;br_edit_store(bank,address,0x02,false);assert(address==7&&bank[7]==0x02);br_edit_store(bank,address,0x80,true);assert(address==8&&bank[7]==0x80);
   uint8_t vr[256],ar[256],stagedV[256],stagedA[256];memset(vr,0xa5,sizeof(vr));memset(ar,0x5a,sizeof(ar));memset(stagedV,0x11,sizeof(stagedV));memset(stagedA,0x22,sizeof(stagedA));assert(!br_publish_banks(false,stagedV,stagedA,vr,ar));assert(vr[0]==0xa5&&ar[0]==0x5a);assert(br_publish_banks(true,stagedV,stagedA,vr,ar));assert(vr[0]==0x11&&ar[0]==0x22);
+  assert(br_memory_display_word(0x04,0x85,true)==0x0485);assert(br_memory_display_word(0x04,0x85,false)==0x0400);
+  uint8_t demo[256],other[256];memset(demo,0,sizeof(demo));memset(other,0xA5,sizeof(other));const uint8_t demoBytes[]={0x10,0x22,0x00,0x01};assert(br_copy_demo_bank(demo,demoBytes,sizeof(demoBytes)));assert(!memcmp(demo,demoBytes,sizeof(demoBytes)));assert(demo[4]==0&&other[0]==0xA5);assert(!br_copy_demo_bank(demo,demoBytes,257));
   HoldGesture h;assert(!h.update(true,1,0,0,100));assert(!h.update(true,2,0,30,100));assert(!h.update(true,2,0,200,100));assert(!h.update(false,2,0,210,100));assert(!h.update(true,2,0,220,100));
   assert(br_storage_recovery_checked(false,true,BR_PARTITION_ERASED)==BR_STORAGE_RECOVERY_FORMAT_BLANK);
   assert(br_storage_recovery_checked(false,true,BR_PARTITION_HAS_DATA)==BR_STORAGE_RECOVERY_REFUSE_DATA);

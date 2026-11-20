@@ -45,7 +45,7 @@ class StorageGuardTests(unittest.TestCase):
         ino=(ROOT/'firmware/bytereel_2026/bytereel_2026.ino').read_text()
         self.assertNotIn('webInit();',ino)
         self.assertIn('if(uiModeGate.observe(edit))webModeTransition(!edit)',ino)
-        self.assertIn('if(webRunning)http.handleClient()',ino)
+        self.assertIn('if(webRunning){const uint32_t httpStarted=micros();http.handleClient()',ino)
         self.assertIn('if(webRoutesConfigured)return',ino)
         worker=ino[ino.index('static void wifiControlTask'):ino.index('static bool i2cReadInputs')]
         self.assertIn('WiFi.softAPdisconnect(true);WiFi.mode(WIFI_OFF)',worker)

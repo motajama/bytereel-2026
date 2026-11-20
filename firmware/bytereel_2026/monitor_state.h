@@ -46,7 +46,7 @@ struct BrLogCursor {
 
 struct BrRuntimeCounters {
   uint32_t i2cErrors=0,uartRx=0,uartTx=0,uartRxOverflow=0,uartTimeout=0;
-  uint32_t audioWriteErrors=0,audioUnderruns=0,videoDroppedFrames=0;
+  uint32_t videoDroppedFrames=0;
   uint32_t executedAtSample=0; uint16_t requestedIps=1,measuredIps=0;
   uint32_t sampleAt=0;
   void sample(uint32_t now,uint32_t executed){if((uint32_t)(now-sampleAt)>=1000){uint32_t dt=now-sampleAt;if(sampleAt)measuredIps=(uint16_t)(((uint64_t)(executed-executedAtSample)*1000)/dt);sampleAt=now;executedAtSample=executed;}}

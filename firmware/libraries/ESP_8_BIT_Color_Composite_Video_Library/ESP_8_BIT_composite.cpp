@@ -27,6 +27,7 @@ static const char *TAG = "ESP_8_BIT";
 static ESP_8_BIT_composite* _instance_ = NULL;
 static int _pal_ = 0;
 static esp_err_t _video_start_result=ESP_OK;
+static const char *_video_start_stage="IDLE";
 
 //====================================================================================================
 //====================================================================================================
@@ -63,9 +64,11 @@ void IRAM_ATTR i2s_intr_handler_video(void *arg)
 
 static esp_err_t start_dma(int line_width,int samples_per_cc, int ch = 1)
 {
+    _video_start_stage="I2S_ENABLE";
     periph_module_enable(PERIPH_I2S0_MODULE);
 
     // setup interrupt
+    _video_start_stage="I2S_IRQ_ALLOC";
     esp_err_t err=esp_intr_alloc(ETS_I2S0_INTR_SOURCE, ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         i2s_intr_handler_video, 0, &_isr_handle);
     if (err != ESP_OK) { periph_module_disable(PERIPH_I2S0_MODULE); return err; }
@@ -83,6 +86,7 @@ static esp_err_t start_dma(int line_width,int samples_per_cc, int ch = 1)
 
     // Create TX DMA buffers
     for (int i = 0; i < 2; i++) {
+        _video_start_stage=(i==0)?"DMA_BUFFER_0_ALLOC":"DMA_BUFFER_1_ALLOC";
         int n = line_width*2*ch;
         if (n >= 4092) {
             printf("DMA chunk too big:%d\n",n);
@@ -375,6 +379,7 @@ void video_init(int samples_per_cc, int ntsc)
 
 void pal_init()
 {
+    _video_start_stage="PAL_BURST_ALLOC";
     int cc_width = 4;
     _sample_rate = PAL_FREQUENCY*cc_width/1000000.0;       // DAC rate in mhz
     _line_width = PAL_COLOR_CLOCKS_PER_SCANLINE*cc_width;
@@ -756,9 +761,12 @@ void ESP_8_BIT_composite::begin()
     ESP_ERROR_CHECK(ESP_FAIL);
   }
   _video_start_result=ESP_OK;
+  _video_start_stage="FRAMEBUFFER_A_ALLOC";
   if (!_bufferA) _bufferA = frameBufferAlloc();
+  if (!_bufferA) {_video_start_result=ESP_ERR_NO_MEM;return;}
+  _video_start_stage="FRAMEBUFFER_B_ALLOC";
   if (!_bufferB) _bufferB = frameBufferAlloc();
-  if (!_bufferA || !_bufferB) return;
+  if (!_bufferB) {_video_start_result=ESP_ERR_NO_MEM;return;}
 
   _lines = _bufferA;
   _backBuffer = _bufferB;
@@ -768,10 +776,15 @@ void ESP_8_BIT_composite::begin()
   _swapCompleteNotify = xTaskGetCurrentTaskHandle();
 
   // Start video signal generator
+  _video_start_stage="VIDEO_INIT";
   video_init(4, !_pal_);
   if(_video_start_result!=ESP_OK){delete[] _burst0;_burst0=NULL;delete[] _burst1;_burst1=NULL;return;}
   _started = true;
+  _video_start_stage="READY";
 }
+
+esp_err_t ESP_8_BIT_composite::startError() const { return _video_start_result; }
+const char *ESP_8_BIT_composite::startStage() const { return _video_start_stage; }
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -862,7 +875,7 @@ uint8_t** ESP_8_BIT_composite::getFrameBufferLines()
 {
   instance_check();
 
-  return _backBuffer;
+  return _started ? _backBuffer : NULL;
 }
 
 /*
